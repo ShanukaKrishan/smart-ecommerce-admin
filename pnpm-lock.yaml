@@ -1,6 +1,7 @@
 lockfileVersion: 5.3
 
 specifiers:
+  '@firebase/util': ^1.5.1
   '@mantine/core': ^4.0.9
   '@mantine/dates': ^4.0.9
   '@mantine/form': ^4.0.9
@@ -27,6 +28,7 @@ specifiers:
   typescript: 4.6.3
 
 dependencies:
+  '@firebase/util': 1.5.1
   '@mantine/core': 4.0.9_3fc75a4504c8529efc3119107af55954
   '@mantine/dates': 4.0.9_53fcd5321f01deed8df1df4d83d9cb48
   '@mantine/form': 4.0.9_react@17.0.2
