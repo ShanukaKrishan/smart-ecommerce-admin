@@ -1,12 +1,19 @@
 import { Center, Text } from '@mantine/core';
-import type { NextPage } from 'next';
+import { NextPage } from 'next';
+import React from 'react';
 import HomeLayout from '../components/HomeLayout';
 
 /* -------------------------------------------------------------------------- */
-/*                                  component                                 */
+/*                                 interfaces                                 */
 /* -------------------------------------------------------------------------- */
 
-const Home: NextPage = () => {
+interface Props {}
+
+/* -------------------------------------------------------------------------- */
+/*                                 components                                 */
+/* -------------------------------------------------------------------------- */
+
+const Users: NextPage = (props: Props) => {
   return (
     <Center style={{ width: '100%', height: '100%' }}>
       <Text>Nothing here yet..</Text>
@@ -18,6 +25,6 @@ const Home: NextPage = () => {
 /*                                   exports                                  */
 /* -------------------------------------------------------------------------- */
 
-(Home as any).Layout = HomeLayout;
+(Users as any).Layout = HomeLayout;
 
-export default Home;
+export default Users;

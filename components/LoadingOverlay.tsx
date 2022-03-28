@@ -1,15 +1,20 @@
-import { Center, Text } from '@mantine/core';
-import type { NextPage } from 'next';
-import HomeLayout from '../components/HomeLayout';
+import { Center, Loader } from '@mantine/core';
+import React from 'react';
+
+/* -------------------------------------------------------------------------- */
+/*                                 interfaces                                 */
+/* -------------------------------------------------------------------------- */
+
+interface Props {}
 
 /* -------------------------------------------------------------------------- */
 /*                                  component                                 */
 /* -------------------------------------------------------------------------- */
 
-const Home: NextPage = () => {
+const LoadingOverlay = (props: Props): JSX.Element => {
   return (
     <Center style={{ width: '100%', height: '100%' }}>
-      <Text>Nothing here yet..</Text>
+      <Loader variant="bars" />
     </Center>
   );
 };
@@ -18,6 +23,4 @@ const Home: NextPage = () => {
 /*                                   exports                                  */
 /* -------------------------------------------------------------------------- */
 
-(Home as any).Layout = HomeLayout;
-
-export default Home;
+export default LoadingOverlay;
