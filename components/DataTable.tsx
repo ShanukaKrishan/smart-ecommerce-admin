@@ -1,25 +1,30 @@
-import { createStyles, Divider, Group, Text, ThemeIcon } from '@mantine/core';
 import {
-  IconBrandAsana,
-  IconDashboard,
-  IconShoppingCart,
-  IconUser,
-} from '@tabler/icons';
-import React from 'react';
-import SideBarItem from './SideBarItem';
-import UserButton from './UserButton';
+  Box,
+  createStyles,
+  Divider,
+  Group,
+  ScrollArea,
+  Table,
+  Text,
+} from '@mantine/core';
+import React, { ReactNode } from 'react';
 
 /* -------------------------------------------------------------------------- */
 /*                                 interfaces                                 */
 /* -------------------------------------------------------------------------- */
 
-interface Props {}
+interface Props {
+  title: string;
+  actions: ReactNode;
+  headers: ReactNode;
+  rows: ReactNode;
+}
 
 /* -------------------------------------------------------------------------- */
 /*                                  component                                 */
 /* -------------------------------------------------------------------------- */
 
-const TheSideBar = (props: Props): JSX.Element => {
+const DataTable = ({ title, actions, headers, rows }: Props): JSX.Element => {
   /* --------------------------------- hooks -------------------------------- */
 
   const { classes } = useStyles();
@@ -32,43 +37,23 @@ const TheSideBar = (props: Props): JSX.Element => {
       direction="column"
       align="stretch"
       spacing={0}
+      noWrap
     >
-      <Group px={20} className={classes.headerWrapper}>
-        <ThemeIcon radius="xl" size="lg">
-          <IconShoppingCart size={20} />
-        </ThemeIcon>
+      <Group px={40} className={classes.titleWrapper} position="apart">
         <Text size="lg" weight={600}>
-          Smart Ecommerce Shop
+          {title}
         </Text>
+        {actions}
       </Group>
-      <Divider />
-      <Group
-        px={12}
-        py={20}
-        spacing={0}
-        className={classes.navigationWrapper}
-        direction="column"
-        align="stretch"
-      >
-        <SideBarItem
-          title="Dashboard"
-          icon={<IconDashboard size={20} />}
-          path=""
-        />
-        <SideBarItem
-          title="Products"
-          icon={<IconShoppingCart size={20} />}
-          path="products"
-        />
-        <SideBarItem
-          title="Catagories"
-          icon={<IconBrandAsana size={20} />}
-          path="catagories"
-        />
-        <SideBarItem title="Users" icon={<IconUser size={20} />} path="users" />
-      </Group>
-      <Divider />
-      <UserButton />
+      <Divider mx={30} />
+      <Box pt={12} px={20} className={classes.tableWrapper}>
+        <ScrollArea px={20} className={classes.scrollArea}>
+          <Table verticalSpacing="sm" highlightOnHover>
+            <thead>{headers}</thead>
+            <tbody>{rows}</tbody>
+          </Table>
+        </ScrollArea>
+      </Box>
     </Group>
   );
 };
@@ -78,20 +63,30 @@ const TheSideBar = (props: Props): JSX.Element => {
 /* -------------------------------------------------------------------------- */
 
 const useStyles = createStyles((theme) => {
-  const border = `1px solid ${theme.colors.gray[4]}`;
   return {
     body: {
       width: '100%',
       height: '100%',
-      borderRight: border,
+      overflow: 'hidden',
     },
-    headerWrapper: {
-      width: '100%',
+    titleWrapper: {
       height: 70,
-      userSelect: 'none',
+      flex: 'none',
     },
-    navigationWrapper: {
+    content: {
+      width: '100%',
+      height: '100%',
       flexGrow: 1,
+    },
+    tableWrapper: {
+      width: '100%',
+      height: '100%',
+      flexGrow: 1,
+      overflow: 'hidden',
+    },
+    scrollArea: {
+      width: '100%',
+      height: '100%',
     },
   };
 });
@@ -100,4 +95,4 @@ const useStyles = createStyles((theme) => {
 /*                                   exports                                  */
 /* -------------------------------------------------------------------------- */
 
-export default TheSideBar;
+export default DataTable;

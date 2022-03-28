@@ -83,6 +83,7 @@ const useStyles = createStyles((theme, { selected }: StyleProps) => {
       width: '100%',
       transition: 'all 0.2s',
       userSelect: 'none',
+      borderRadius: theme.radius.sm,
       backgroundColor: selected ? theme.colors.blue[0] : 'transparent',
       '&:hover': {
         backgroundColor: selected ? theme.colors.blue[0] : theme.colors.gray[0],

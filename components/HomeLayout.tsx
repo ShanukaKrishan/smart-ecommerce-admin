@@ -91,6 +91,7 @@ const useStyles = createStyles((theme) => {
       width: '100%',
       height: '100%',
       flexGrow: 1,
+      overflow: 'hidden',
     },
     sideBarWrapper: {
       width: 350,

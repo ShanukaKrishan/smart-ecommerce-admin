@@ -106,11 +106,9 @@ const UserButton: ForwardRefRenderFunction<HTMLDivElement, Props> = (
 /* -------------------------------------------------------------------------- */
 
 const useStyles = createStyles((theme) => {
-  const border = `1px solid ${theme.colors.gray[4]}`;
   return {
     body: {
       width: '100%',
-      borderTop: border,
       overflow: 'hidden',
       userSelect: 'none',
       transition: 'all 0.2s',
