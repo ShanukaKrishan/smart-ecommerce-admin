@@ -1,21 +1,16 @@
 import { ActionIcon, Avatar, Button, createStyles } from '@mantine/core';
 import { IconPencil, IconPlus } from '@tabler/icons';
 import { NextPage } from 'next';
+import Link from 'next/link';
 import React from 'react';
-import DataTable from '../components/DataTable';
-import HomeLayout from '../components/HomeLayout';
-
-/* -------------------------------------------------------------------------- */
-/*                                 interfaces                                 */
-/* -------------------------------------------------------------------------- */
-
-interface Props {}
+import DataTable from '../../components/DataTable';
+import HomeLayout from '../../components/HomeLayout';
 
 /* -------------------------------------------------------------------------- */
 /*                                  component                                 */
 /* -------------------------------------------------------------------------- */
 
-const Products: NextPage = (props: Props) => {
+const Products: NextPage = () => {
   /* --------------------------------- hooks -------------------------------- */
 
   const { classes } = useStyles();
@@ -61,7 +56,13 @@ const Products: NextPage = (props: Props) => {
     <div className={classes.body}>
       <DataTable
         title="Products"
-        actions={<Button leftIcon={<IconPlus />}>New Product</Button>}
+        loading={false}
+        itemCount={elements.length}
+        actions={
+          <Link href="/products/create" passHref>
+            <Button leftIcon={<IconPlus />}>New Product</Button>
+          </Link>
+        }
         headers={
           <tr>
             <th></th>
@@ -74,6 +75,7 @@ const Products: NextPage = (props: Props) => {
           </tr>
         }
         rows={rows}
+        emptyMessage=""
       ></DataTable>
     </div>
   );

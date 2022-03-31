@@ -4,16 +4,10 @@ import React from 'react';
 import HomeLayout from '../components/HomeLayout';
 
 /* -------------------------------------------------------------------------- */
-/*                                 interfaces                                 */
-/* -------------------------------------------------------------------------- */
-
-interface Props {}
-
-/* -------------------------------------------------------------------------- */
 /*                                 components                                 */
 /* -------------------------------------------------------------------------- */
 
-const Users: NextPage = (props: Props) => {
+const Users: NextPage = () => {
   return (
     <Center style={{ width: '100%', height: '100%' }}>
       <Text>Nothing here yet..</Text>

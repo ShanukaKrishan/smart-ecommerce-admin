@@ -1,4 +1,4 @@
-import { Box, Center, createStyles, Group, Loader } from '@mantine/core';
+import { AppShell } from '@mantine/core';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { AuthAction, useAuthUser, withAuthUser } from 'next-firebase-auth';
 import React, { ReactNode, useEffect } from 'react';
@@ -7,6 +7,7 @@ import { setUrlPath } from '../redux/reducers/homeReducer';
 import { setToken } from '../redux/reducers/identityReducer';
 import LoadingOverlay from './LoadingOverlay';
 import TheSideBar from './sidebar/TheSideBar';
+import TheTopBar from './TheTopBar';
 
 /* -------------------------------------------------------------------------- */
 /*                                 interfaces                                 */
@@ -22,8 +23,6 @@ interface Props {
 
 const HomeLayout = ({ children }: Props): JSX.Element => {
   /* --------------------------------- hooks -------------------------------- */
-
-  const { classes } = useStyles();
 
   const dispatch = useDispatch();
 
@@ -67,38 +66,21 @@ const HomeLayout = ({ children }: Props): JSX.Element => {
   /* -------------------------------- render -------------------------------- */
 
   return (
-    <Group className={classes.body} align="stretch" spacing={0} noWrap>
-      <Box className={classes.sideBarWrapper}>
-        <TheSideBar />
-      </Box>
-      <Box className={classes.content}>{children}</Box>
-    </Group>
+    <AppShell
+      padding={0}
+      navbar={<TheSideBar />}
+      header={<TheTopBar />}
+      navbarOffsetBreakpoint="md"
+      fixed
+    >
+      {children}
+    </AppShell>
   );
 };
 
 /* -------------------------------------------------------------------------- */
 /*                                   styles                                   */
 /* -------------------------------------------------------------------------- */
-
-const useStyles = createStyles((theme) => {
-  return {
-    body: {
-      width: '100%',
-      height: '100vh',
-      overflow: 'hidden',
-    },
-    content: {
-      width: '100%',
-      height: '100%',
-      flexGrow: 1,
-      overflow: 'hidden',
-    },
-    sideBarWrapper: {
-      width: 350,
-      height: '100%',
-    },
-  };
-});
 
 /* -------------------------------------------------------------------------- */
 /*                                   exports                                  */

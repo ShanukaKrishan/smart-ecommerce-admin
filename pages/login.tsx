@@ -7,37 +7,29 @@ import {
   Group,
   Paper,
   PasswordInput,
+  Stack,
   Text,
   TextInput,
   useMantineTheme,
 } from '@mantine/core';
 import { useForm } from '@mantine/form';
-import {
-  IconBrandFacebook,
-  IconBrandGoogle,
-  IconCheck,
-  IconMail,
-  IconX,
-} from '@tabler/icons';
+import { IconBrandFacebook, IconBrandGoogle, IconMail } from '@tabler/icons';
 import { NextPage } from 'next';
 import React from 'react';
 import { motion } from 'framer-motion';
 import { GoogleAuthProvider, getAuth, signInWithPopup } from 'firebase/auth';
-import { useNotifications } from '@mantine/notifications';
 import { FirebaseError } from '@firebase/util';
 import { useRouter } from 'next/router';
-
-/* -------------------------------------------------------------------------- */
-/*                                 interfaces                                 */
-/* -------------------------------------------------------------------------- */
-
-interface Props {}
+import {
+  showErrorNotification,
+  showSuccessNotification,
+} from '../helpers/notification';
 
 /* -------------------------------------------------------------------------- */
 /*                                  component                                 */
 /* -------------------------------------------------------------------------- */
 
-const Login: NextPage = (props: Props) => {
+const Login: NextPage = () => {
   /* --------------------------------- hooks -------------------------------- */
 
   const router = useRouter();
@@ -45,8 +37,6 @@ const Login: NextPage = (props: Props) => {
   const theme = useMantineTheme();
 
   const { classes } = useStyles();
-
-  const notifications = useNotifications();
 
   const form = useForm({
     initialValues: {
@@ -77,11 +67,7 @@ const Login: NextPage = (props: Props) => {
       // check user
       if (result.user == null) return;
       // show success toast
-      notifications.showNotification({
-        message: 'Successfully Logged In',
-        icon: <IconCheck />,
-        color: 'teal',
-      });
+      showSuccessNotification('Successfully Logged In');
       // navigate to home
       await router.replace('/');
     } catch (error) {
@@ -91,11 +77,7 @@ const Login: NextPage = (props: Props) => {
         }
       }
       // show error toast
-      notifications.showNotification({
-        message: 'Logged In Failed',
-        icon: <IconX />,
-        color: 'red',
-      });
+      showErrorNotification('Logged In Failed');
     }
   };
 
@@ -105,13 +87,8 @@ const Login: NextPage = (props: Props) => {
 
   return (
     <Center className={classes.body}>
-      <Group
-        spacing={24}
-        direction="column"
-        align="stretch"
-        className={classes.content}
-      >
-        <Group spacing={4} direction="column" position="center">
+      <Stack spacing={24} align="stretch" className={classes.content}>
+        <Stack spacing={4} align="center">
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -133,15 +110,15 @@ const Login: NextPage = (props: Props) => {
               <Anchor size="sm">Create account</Anchor>
             </Group>
           </motion.div>
-        </Group>
+        </Stack>
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5, delay: 0.4 }}
         >
           <Paper p="xl">
-            <Group direction="column" align="stretch">
-              <Group direction="column" align="stretch" spacing={8}>
+            <Stack align="stretch">
+              <Stack align="stretch" spacing={8}>
                 <Text size="sm">Sign in with</Text>
                 <Group grow>
                   <Button
@@ -155,10 +132,10 @@ const Login: NextPage = (props: Props) => {
                     Facebook
                   </Button>
                 </Group>
-              </Group>
+              </Stack>
               <Divider label="or continue with email" labelPosition="center" />
               <form onSubmit={form.onSubmit(handleSubmit)}>
-                <Group spacing={8} direction="column" align="stretch">
+                <Stack spacing={8} align="stretch">
                   <TextInput
                     required
                     label="Email"
@@ -172,12 +149,12 @@ const Login: NextPage = (props: Props) => {
                   <Button mt={12} type="submit" leftIcon={<IconMail />}>
                     Login With Email
                   </Button>
-                </Group>
+                </Stack>
               </form>
-            </Group>
+            </Stack>
           </Paper>
         </motion.div>
-      </Group>
+      </Stack>
     </Center>
   );
 };

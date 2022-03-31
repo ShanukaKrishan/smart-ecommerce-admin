@@ -5,6 +5,8 @@ import { NextComponentType, NextPageContext } from 'next';
 import { Provider } from 'react-redux';
 import MantineTheme from '../components/MantineTheme';
 import store from '../redux/store';
+import { useEffect } from 'react';
+import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore';
 
 /* -------------------------------------------------------------------------- */
 /*                                 interfaces                                 */
@@ -29,6 +31,16 @@ initAuth();
 /* -------------------------------------------------------------------------- */
 
 function MyApp({ Component, pageProps }: AppPropsExtended) {
+  /* --------------------------------- hooks -------------------------------- */
+
+  useEffect(() => {
+    // check stage
+    if (process.env.NODE_ENV != 'development') return;
+    // initialize firestore emulator
+    const db = getFirestore();
+    connectFirestoreEmulator(db, 'localhost', 8081);
+  }, []);
+
   /* ------------------------------ calculators ----------------------------- */
 
   const Layout = Component.Layout ?? Noop;

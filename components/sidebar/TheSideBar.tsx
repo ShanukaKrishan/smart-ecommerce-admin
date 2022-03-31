@@ -1,4 +1,14 @@
-import { createStyles, Divider, Group, Text, ThemeIcon } from '@mantine/core';
+import {
+  createStyles,
+  Divider,
+  Group,
+  MediaQuery,
+  Navbar,
+  ScrollArea,
+  Stack,
+  Text,
+  ThemeIcon,
+} from '@mantine/core';
 import {
   IconBrandAsana,
   IconDashboard,
@@ -6,6 +16,8 @@ import {
   IconUser,
 } from '@tabler/icons';
 import React from 'react';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../redux/store';
 import SideBarItem from './SideBarItem';
 import UserButton from './UserButton';
 
@@ -22,54 +34,72 @@ interface Props {}
 const TheSideBar = (props: Props): JSX.Element => {
   /* --------------------------------- hooks -------------------------------- */
 
+  const drawerOpened = useSelector(
+    (state: RootState) => state.home.drawerOpened
+  );
+
   const { classes } = useStyles();
 
   /* -------------------------------- render -------------------------------- */
 
   return (
-    <Group
-      className={classes.body}
-      direction="column"
-      align="stretch"
-      spacing={0}
+    <Navbar
+      width={{ base: 350 }}
+      hiddenBreakpoint="md"
+      hidden={!drawerOpened}
+      fixed
     >
-      <Group px={20} className={classes.headerWrapper}>
-        <ThemeIcon radius="xl" size="lg">
-          <IconShoppingCart size={20} />
-        </ThemeIcon>
-        <Text size="lg" weight={600}>
-          Smart Ecommerce Shop
-        </Text>
-      </Group>
+      <Navbar.Section>
+        <MediaQuery smallerThan="sm" styles={{ display: 'none' }}>
+          <Group px={20} className={classes.headerWrapper} noWrap>
+            <ThemeIcon radius="xl" size="lg">
+              <IconShoppingCart size={20} />
+            </ThemeIcon>
+            <Text size="lg" weight={600}>
+              Smart Ecommerce Shop
+            </Text>
+          </Group>
+        </MediaQuery>
+      </Navbar.Section>
+      <MediaQuery smallerThan="sm" styles={{ display: 'none' }}>
+        <Divider />
+      </MediaQuery>
+      <Navbar.Section component={ScrollArea} grow>
+        <Stack
+          px={12}
+          py={20}
+          spacing={0}
+          className={classes.navigationWrapper}
+          align="stretch"
+        >
+          <SideBarItem
+            title="Dashboard"
+            icon={<IconDashboard size={20} />}
+            path=""
+          />
+          <SideBarItem
+            title="Products"
+            icon={<IconShoppingCart size={20} />}
+            path="products"
+          />
+          <SideBarItem
+            title="Categories"
+            icon={<IconBrandAsana size={20} />}
+            path="categories"
+            subPaths={['categories/create']}
+          />
+          <SideBarItem
+            title="Users"
+            icon={<IconUser size={20} />}
+            path="users"
+          />
+        </Stack>
+      </Navbar.Section>
       <Divider />
-      <Group
-        px={12}
-        py={20}
-        spacing={0}
-        className={classes.navigationWrapper}
-        direction="column"
-        align="stretch"
-      >
-        <SideBarItem
-          title="Dashboard"
-          icon={<IconDashboard size={20} />}
-          path=""
-        />
-        <SideBarItem
-          title="Products"
-          icon={<IconShoppingCart size={20} />}
-          path="products"
-        />
-        <SideBarItem
-          title="Catagories"
-          icon={<IconBrandAsana size={20} />}
-          path="catagories"
-        />
-        <SideBarItem title="Users" icon={<IconUser size={20} />} path="users" />
-      </Group>
-      <Divider />
-      <UserButton />
-    </Group>
+      <Navbar.Section>
+        <UserButton />
+      </Navbar.Section>
+    </Navbar>
   );
 };
 
@@ -78,13 +108,7 @@ const TheSideBar = (props: Props): JSX.Element => {
 /* -------------------------------------------------------------------------- */
 
 const useStyles = createStyles((theme) => {
-  const border = `1px solid ${theme.colors.gray[4]}`;
   return {
-    body: {
-      width: '100%',
-      height: '100%',
-      borderRight: border,
-    },
     headerWrapper: {
       width: '100%',
       height: 70,

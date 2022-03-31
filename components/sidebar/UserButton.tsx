@@ -1,15 +1,12 @@
-import { Avatar, createStyles, Group, Menu, Text } from '@mantine/core';
-import { useNotifications } from '@mantine/notifications';
-import {
-  IconCheck,
-  IconChevronRight,
-  IconLogout,
-  IconPencil,
-  IconX,
-} from '@tabler/icons';
+import { Avatar, createStyles, Group, Menu, Stack, Text } from '@mantine/core';
+import { IconChevronRight, IconLogout, IconPencil } from '@tabler/icons';
 import { getAuth, signOut } from 'firebase/auth';
 import { useRouter } from 'next/router';
 import React, { forwardRef, ForwardRefRenderFunction } from 'react';
+import {
+  showErrorNotification,
+  showSuccessNotification,
+} from '../../helpers/notification';
 
 /* -------------------------------------------------------------------------- */
 /*                                 interfaces                                 */
@@ -33,8 +30,6 @@ const UserButton: ForwardRefRenderFunction<HTMLDivElement, Props> = (
 
   const router = useRouter();
 
-  const notifications = useNotifications();
-
   /* ------------------------------- handlers ------------------------------- */
 
   const logout = async () => {
@@ -46,18 +41,10 @@ const UserButton: ForwardRefRenderFunction<HTMLDivElement, Props> = (
       // redirect to login scree
       await router.replace('/login');
       // show success toast
-      notifications.showNotification({
-        message: 'Successfully Logged Out',
-        icon: <IconCheck />,
-        color: 'teal',
-      });
+      showSuccessNotification('Successfully Logged Out');
     } catch (error) {
       // show error toast
-      notifications.showNotification({
-        message: 'Error Occurred..',
-        icon: <IconX />,
-        color: 'red',
-      });
+      showErrorNotification('Error Occurred..');
     }
   };
 
@@ -71,14 +58,14 @@ const UserButton: ForwardRefRenderFunction<HTMLDivElement, Props> = (
         src={firebaseAuth.currentUser?.photoURL ?? '/avatar.png'}
         style={{ flex: 'none' }}
       />
-      <Group direction="column" spacing={0} className={classes.detailsWrapper}>
+      <Stack spacing={0} className={classes.detailsWrapper}>
         <Text size="sm" weight={500}>
           {firebaseAuth.currentUser?.displayName}
         </Text>
         <Text className={classes.ellipsisText} size="xs">
           {firebaseAuth.currentUser?.email}
         </Text>
-      </Group>
+      </Stack>
       <IconChevronRight color="gray" size={16} style={{ flex: 'none' }} />
     </Group>
   ));

@@ -20,8 +20,11 @@ const MantineTheme = ({ children }: Props): JSX.Element => {
       withNormalizeCSS
       withGlobalStyles
       theme={theme}
-      defaultProps={{}}
+      defaultProps={{ Group: { noWrap: true } }}
       styles={{
+        AppShell: (theme) => ({
+          main: { maxHeight: '100vh' },
+        }),
         TextInput: (theme) => ({
           error: {
             fontSize: theme.fontSizes.xs,
