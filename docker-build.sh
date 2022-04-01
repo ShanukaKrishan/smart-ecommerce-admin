@@ -1,5 +1,10 @@
 #!/bin/bash
 
+if [[ -z $1 ]]; then
+    echo Please provide the version
+    exit 1
+fi
+
 docker buildx build \
   --pull \
   --no-cache \

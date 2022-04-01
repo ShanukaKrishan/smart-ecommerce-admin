@@ -81,6 +81,7 @@ const TheSideBar = (props: Props): JSX.Element => {
             title="Products"
             icon={<IconShoppingCart size={20} />}
             path="products"
+            subPaths={['products/create']}
           />
           <SideBarItem
             title="Categories"

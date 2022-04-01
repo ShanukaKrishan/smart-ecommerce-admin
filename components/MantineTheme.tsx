@@ -30,7 +30,17 @@ const MantineTheme = ({ children }: Props): JSX.Element => {
             fontSize: theme.fontSizes.xs,
           },
         }),
+        NumberInput: (theme) => ({
+          error: {
+            fontSize: theme.fontSizes.xs,
+          },
+        }),
         PasswordInput: (theme) => ({
+          error: {
+            fontSize: theme.fontSizes.xs,
+          },
+        }),
+        Select: (theme) => ({
           error: {
             fontSize: theme.fontSizes.xs,
           },

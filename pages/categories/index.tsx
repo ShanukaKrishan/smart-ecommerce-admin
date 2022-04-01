@@ -136,8 +136,8 @@ const Catagories = (): JSX.Element => {
 
   const rows = categories.map((element, index) => (
     <tr key={index}>
-      <td>{element.name}</td>
-      <td>{element.description}</td>
+      <td style={{ whiteSpace: 'nowrap' }}>{element.name}</td>
+      <td style={{ whiteSpace: 'nowrap' }}>{element.description}</td>
       <td>
         <Center>
           <ActionIcon

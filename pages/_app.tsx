@@ -7,6 +7,7 @@ import MantineTheme from '../components/MantineTheme';
 import store from '../redux/store';
 import { useEffect } from 'react';
 import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore';
+import { connectStorageEmulator, getStorage } from 'firebase/storage';
 
 /* -------------------------------------------------------------------------- */
 /*                                 interfaces                                 */
@@ -39,6 +40,9 @@ function MyApp({ Component, pageProps }: AppPropsExtended) {
     // initialize firestore emulator
     const db = getFirestore();
     connectFirestoreEmulator(db, 'localhost', 8081);
+    // initialize storage emulator
+    const storage = getStorage();
+    connectStorageEmulator(storage, 'localhost', 9199);
   }, []);
 
   /* ------------------------------ calculators ----------------------------- */

@@ -3,6 +3,7 @@ import {
   Center,
   createStyles,
   Group,
+  Loader,
   MediaQuery,
   Stack,
   Text,
@@ -165,6 +166,8 @@ const useStyles = createStyles((theme) => {
       width: 130,
     },
     formWrapper: {
+      width: '100%',
+      height: '100%',
       padding: 0,
       [`@media (max-width: ${theme.breakpoints.sm}px)`]: {
         padding: '0 40px',
@@ -172,6 +175,7 @@ const useStyles = createStyles((theme) => {
     },
     form: {
       width: '50%',
+      height: '100%',
       [`@media (max-width: ${theme.breakpoints.sm}px)`]: {
         width: '100%',
       },
