@@ -29,7 +29,6 @@ import {
   doc,
   deleteDoc,
 } from 'firebase/firestore';
-import Category, { categoryConverter } from '../../models/category';
 import {
   showErrorNotification,
   showSuccessNotification,
@@ -37,19 +36,20 @@ import {
 import { useRouter } from 'next/router';
 import { deleteObject, getStorage, ref } from 'firebase/storage';
 import { async } from '@firebase/util';
+import Brand, { brandConverter } from '../../models/brand';
 
 /* -------------------------------------------------------------------------- */
 /*                                 components                                 */
 /* -------------------------------------------------------------------------- */
 
-const Catagories = (): JSX.Element => {
+const Brands = (): JSX.Element => {
   /* --------------------------------- hooks -------------------------------- */
 
-  const [categories, setCategories] = useState<Category[]>([]);
+  const [brands, setBrands] = useState<Brand[]>([]);
 
-  const [categoriesFetched, setCategoriesFetched] = useState(false);
+  const [brandsFetched, setBrandsFetched] = useState(false);
 
-  const [selectedCategory, setSelectedCategory] = useState<Category>();
+  const [selectedBrand, setSelectedBrand] = useState<Brand>();
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
@@ -61,37 +61,33 @@ const Catagories = (): JSX.Element => {
     // get firestore
     const firestore = getFirestore();
     // create reference with converter
-    const ref = collection(firestore, 'categories').withConverter(
-      categoryConverter
-    );
+    const ref = collection(firestore, 'brands').withConverter(brandConverter);
     // build query
     const queryRef = query(ref);
     // subscribe to data
     const unsubscribe = onSnapshot(
       queryRef,
       async (snapshot) => {
-        // create array to store categories
-        const categories: Category[] = [];
+        // create array to store brands
+        const brands: Brand[] = [];
         // iterate through snapshot data
         for (const doc of snapshot.docs) {
-          // get category
-          const category = doc.data();
-          // initialize category
-          await category.initialize();
-          // add category to array
-          categories.push(category);
+          // get brand
+          const brand = doc.data();
+          // add brand to array
+          brands.push(brand);
         }
-        // save categories
-        setCategories(categories);
-        // set categories fetched
-        setCategoriesFetched(true);
+        // save brands
+        setBrands(brands);
+        // set brands fetched
+        setBrandsFetched(true);
       },
       (error) => {
         console.log(error);
         // show notification
         showErrorNotification('Error Occurred..');
-        // set categories fetched
-        setCategoriesFetched(true);
+        // set brands fetched
+        setBrandsFetched(true);
       }
     );
     // unsubscribe on page detached
@@ -101,8 +97,8 @@ const Catagories = (): JSX.Element => {
   /* ------------------------------- handlers ------------------------------- */
 
   const openDeleteDialog = (index: number) => {
-    // set selected category
-    setSelectedCategory(categories[index]);
+    // set selected brand
+    setSelectedBrand(brands[index]);
     // open dialog
     setDeleteDialogOpen(true);
   };
@@ -111,56 +107,41 @@ const Catagories = (): JSX.Element => {
     setDeleteDialogOpen(false);
   };
 
-  const deleteCategory = async () => {
+  const deleteBrand = async () => {
     // close dialog
     setDeleteDialogOpen(false);
-    // check selected category exist
-    if (selectedCategory == null) return;
-    // get category
-    const category = selectedCategory;
+    // check selected brands exist
+    if (selectedBrand == null) return;
+    // get brands
+    const brands = selectedBrand;
     try {
       // get firestore
       const firestore = getFirestore();
       // create reference with converter
-      const documentRef = doc(firestore, 'categories', category.id);
-      // delete category
+      const documentRef = doc(firestore, 'brands', brands.id);
+      // delete brand
       await deleteDoc(documentRef);
-      // get storage
-      const storage = getStorage();
-      // create reference
-      const imageRef = ref(storage, category.imagePath);
-      // delete image
-      await deleteObject(imageRef);
       // show notification
-      showSuccessNotification('Successfully deleted category');
+      showSuccessNotification('Successfully deleted brand');
     } catch (error) {
       // show notification
       showErrorNotification('Error Occurred..');
     }
   };
 
-  const editCategory = (index: number) => {
-    // get category
-    const category = categories[index];
-    // set selected category
-    setSelectedCategory(category);
+  const editBrand = (index: number) => {
+    // get brand
+    const brand = brands[index];
+    // set selected brand
+    setSelectedBrand(brand);
     // go to edit screen
-    router.push(`/categories/${category.id}`);
+    router.push(`/brands/${brand.id}`);
   };
 
   /* ------------------------------ calculators ----------------------------- */
 
-  const rows = categories.map((element, index) => (
+  const rows = brands.map((element, index) => (
     <tr key={index}>
-      <td>
-        <Center>
-          <Avatar
-            src={element.imageUrl}
-            radius="xl"
-            imageProps={{ style: { objectFit: 'cover' } }}
-          />
-        </Center>
-      </td>
       <td style={{ whiteSpace: 'nowrap' }}>{element.name}</td>
       <td style={{ whiteSpace: 'nowrap' }}>{element.description}</td>
       <td>
@@ -170,7 +151,7 @@ const Catagories = (): JSX.Element => {
             color="blue"
             radius="xl"
             size="lg"
-            onClick={() => editCategory(index)}
+            onClick={() => editBrand(index)}
           >
             <IconPencil />
           </ActionIcon>
@@ -197,17 +178,16 @@ const Catagories = (): JSX.Element => {
   return (
     <div className={classes.body}>
       <DataTable
-        title="Categories"
-        loading={!categoriesFetched}
-        itemCount={categories.length}
+        title="Brands"
+        loading={!brandsFetched}
+        itemCount={brands.length}
         actions={
-          <Link href="/categories/create" passHref>
-            <Button leftIcon={<IconPlus />}>New Category</Button>
+          <Link href="/brands/create" passHref>
+            <Button leftIcon={<IconPlus />}>New Brand</Button>
           </Link>
         }
         headers={
           <tr>
-            <th style={{ width: 80 }}></th>
             <th>Name</th>
             <th>Description</th>
             <th style={{ width: 50 }}></th>
@@ -218,13 +198,13 @@ const Catagories = (): JSX.Element => {
         emptyMessage={
           <Center style={{ width: '100%', height: '100%' }}>
             <Stack align="center" spacing={4}>
-              <Text size="sm">No Categories Exist..</Text>
+              <Text size="sm">No Brands Exist..</Text>
               <Group spacing={4}>
                 <Text size="xs">(Click here to</Text>
-                <Link href="/categories/create" passHref>
+                <Link href="/brands/create" passHref>
                   <Anchor size="xs">Create</Anchor>
                 </Link>
-                <Text size="xs">a new category)</Text>
+                <Text size="xs">a new brand)</Text>
               </Group>
             </Stack>
           </Center>
@@ -233,14 +213,14 @@ const Catagories = (): JSX.Element => {
       <Dialog opened={deleteDialogOpen} style={{ width: 400 }}>
         <Group position="apart">
           <Stack spacing={0}>
-            <Text size="sm">Confirm Delete Category</Text>
-            <Text size="xs">({selectedCategory?.name})</Text>
+            <Text size="sm">Confirm Delete Brand</Text>
+            <Text size="xs">({selectedBrand?.name})</Text>
           </Stack>
           <Group>
             <Button variant="outline" color="red" onClick={closeDeleteDialog}>
               <IconX />
             </Button>
-            <Button variant="outline" color="green" onClick={deleteCategory}>
+            <Button variant="outline" color="green" onClick={deleteBrand}>
               <IconCheck />
             </Button>
           </Group>
@@ -268,6 +248,6 @@ const useStyles = createStyles((theme) => {
 /*                                   exports                                  */
 /* -------------------------------------------------------------------------- */
 
-(Catagories as any).Layout = HomeLayout;
+(Brands as any).Layout = HomeLayout;
 
-export default Catagories;
+export default Brands;

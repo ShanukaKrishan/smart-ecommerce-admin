@@ -1,58 +1,32 @@
 import {
-  Box,
   Button,
   Center,
   createStyles,
-  Divider,
-  Grid,
   Group,
-  Loader,
   MediaQuery,
   Stack,
   Text,
   TextInput,
 } from '@mantine/core';
 import { useForm } from '@mantine/form';
-import { IconCheck, IconCircleMinus, IconX } from '@tabler/icons';
+import { IconCheck, IconX } from '@tabler/icons';
 import { useRouter } from 'next/router';
 import React, { useState } from 'react';
 import HomeLayout from '../../components/HomeLayout';
-import {
-  getFirestore,
-  collection,
-  addDoc,
-  doc,
-  updateDoc,
-} from 'firebase/firestore';
-import Category, { categoryConverter } from '../../models/category';
+import { getFirestore, collection, addDoc } from 'firebase/firestore';
 import {
   showErrorNotification,
   showSuccessNotification,
 } from '../../helpers/notification';
-import { Dropzone, IMAGE_MIME_TYPE } from '@mantine/dropzone';
-import Image from 'next/image';
-import ImageDropzone from '../../components/ImageDropzone';
-import ImagePreview from '../../components/ImagePreview';
 import FormCategoryLabel from '../../components/form/FormCategoryLabel';
 import FormCategory from '../../components/form/FormCategory';
-import { getStorage, ref, uploadBytes } from 'firebase/storage';
-import { getExtension } from '../../helpers/string';
-
-/* -------------------------------------------------------------------------- */
-/*                                 interfaces                                 */
-/* -------------------------------------------------------------------------- */
-
-interface FormValues {
-  name: string;
-  description: string;
-  image: File | null;
-}
+import Brand, { brandConverter } from '../../models/brand';
 
 /* -------------------------------------------------------------------------- */
 /*                                  component                                 */
 /* -------------------------------------------------------------------------- */
 
-const CreateCategory = (): JSX.Element => {
+const CreateBrand = (): JSX.Element => {
   /* --------------------------------- hooks -------------------------------- */
 
   const [loading, setLoading] = useState(false);
@@ -61,16 +35,14 @@ const CreateCategory = (): JSX.Element => {
 
   const { classes } = useStyles();
 
-  const form = useForm<FormValues>({
+  const form = useForm({
     initialValues: {
       name: '',
       description: '',
-      image: null,
     },
     validate: {
       name: (value) => null,
       description: (value) => null,
-      image: (value) => (value == null ? 'Please select an image' : null),
     },
   });
 
@@ -80,65 +52,28 @@ const CreateCategory = (): JSX.Element => {
     router.back();
   };
 
-  const uploadImage = async (
-    imageFile: File,
-    categoryId: string
-  ): Promise<string> => {
-    // get storage
-    const storage = getStorage();
-    // create reference
-    const imageRef = ref(
-      storage,
-      `categories/${categoryId}.${getExtension(imageFile.name)}`
-    );
-    // upload image
-    await uploadBytes(imageRef, imageFile);
-    // return full path
-    return imageRef.fullPath;
-  };
-
-  const createCategory = async (
+  const createBrand = async (
     name: string,
     description: string
   ): Promise<string> => {
     // get firestore
     const firestore = getFirestore();
     // create reference with converter
-    const ref = collection(firestore, 'categories').withConverter(
-      categoryConverter
-    );
+    const ref = collection(firestore, 'brands').withConverter(brandConverter);
     // add document to the database
-    const resultRef = await addDoc(
-      ref,
-      new Category('', name, description, '', '')
-    );
+    const resultRef = await addDoc(ref, new Brand('', name, description));
     // return product id
     return resultRef.id;
-  };
-
-  const updateCategoryImagePath = async (id: string, path: string) => {
-    // get firestore
-    const firestore = getFirestore();
-    // create reference with converter
-    const ref = doc(firestore, 'categories', id).withConverter(
-      categoryConverter
-    );
-    // add document to the database
-    await updateDoc(ref, { imagePath: path });
   };
 
   const handleSubmit = async (values: typeof form.values) => {
     try {
       // start loading
       setLoading(true);
-      // create category
-      const categoryId = await createCategory(values.name, values.description);
-      // save image
-      const imagePath = await uploadImage(values.image!, categoryId);
-      // update image path in product
-      await updateCategoryImagePath(categoryId, imagePath);
+      // create brand
+      await createBrand(values.name, values.description);
       // show success notification
-      showSuccessNotification('Successfully created category');
+      showSuccessNotification('Successfully created brand');
       // close page
       router.back();
     } catch (error) {
@@ -151,10 +86,6 @@ const CreateCategory = (): JSX.Element => {
     }
   };
 
-  const removeImage = () => {
-    form.setFieldValue('image', null);
-  };
-
   /* -------------------------------- render -------------------------------- */
 
   return (
@@ -162,10 +93,10 @@ const CreateCategory = (): JSX.Element => {
       <Group px={40} className={classes.titleWrapper} position="apart">
         <Stack spacing={0}>
           <Text size="lg" weight={600}>
-            Create Category
+            Create Brand
           </Text>
           <Text size="xs" color="gray">
-            Categories will be used by products for grouping
+            Brands will be used by products for grouping
           </Text>
         </Stack>
         <MediaQuery smallerThan="sm" styles={{ display: 'none' }}>
@@ -176,7 +107,7 @@ const CreateCategory = (): JSX.Element => {
             <Button
               className={classes.titleButton}
               leftIcon={<IconCheck />}
-              form="create-category-form"
+              form="create-brand-form"
               type="submit"
               loading={loading}
             >
@@ -187,7 +118,7 @@ const CreateCategory = (): JSX.Element => {
       </Group>
       <Center className={classes.formWrapper}>
         <form
-          id="create-category-form"
+          id="create-brand-form"
           className={classes.form}
           onSubmit={form.onSubmit(handleSubmit)}
         >
@@ -195,45 +126,8 @@ const CreateCategory = (): JSX.Element => {
             <FormCategory
               label={
                 <FormCategoryLabel
-                  title="Image"
-                  description="Category image use to show categories in home page"
-                />
-              }
-            >
-              {form.values.image == null && (
-                <Dropzone
-                  multiple={false}
-                  onDrop={(files) => {
-                    form.setFieldValue('image', files[0]);
-                  }}
-                  onReject={(rejections) => {
-                    console.log(rejections);
-                  }}
-                  maxSize={5 * 1024 ** 2}
-                  accept={IMAGE_MIME_TYPE}
-                  style={{
-                    height: 200,
-                    borderColor: form.errors.image != null ? 'red' : undefined,
-                  }}
-                >
-                  {(status) => (
-                    <ImageDropzone status={status} error={form.errors.image} />
-                  )}
-                </Dropzone>
-              )}
-              {form.values.image != null && (
-                <ImagePreview
-                  src={URL.createObjectURL(form.values.image)}
-                  onRemoveImage={removeImage}
-                />
-              )}
-            </FormCategory>
-            <Divider my={12} mt={20} />
-            <FormCategory
-              label={
-                <FormCategoryLabel
                   title="Basic"
-                  description="Category basic details"
+                  description="Brand basic details"
                 />
               }
             >
@@ -317,6 +211,6 @@ const useStyles = createStyles((theme) => {
 /*                                   exports                                  */
 /* -------------------------------------------------------------------------- */
 
-(CreateCategory as any).Layout = HomeLayout;
+(CreateBrand as any).Layout = HomeLayout;
 
-export default CreateCategory;
+export default CreateBrand;

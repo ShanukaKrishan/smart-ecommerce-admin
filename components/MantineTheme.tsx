@@ -26,21 +26,33 @@ const MantineTheme = ({ children }: Props): JSX.Element => {
           main: { maxHeight: '100vh' },
         }),
         TextInput: (theme) => ({
+          label: {
+            color: theme.colors.gray[7],
+          },
           error: {
             fontSize: theme.fontSizes.xs,
           },
         }),
         NumberInput: (theme) => ({
+          label: {
+            color: theme.colors.gray[7],
+          },
           error: {
             fontSize: theme.fontSizes.xs,
           },
         }),
         PasswordInput: (theme) => ({
+          label: {
+            color: theme.colors.gray[7],
+          },
           error: {
             fontSize: theme.fontSizes.xs,
           },
         }),
         Select: (theme) => ({
+          label: {
+            color: theme.colors.gray[7],
+          },
           error: {
             fontSize: theme.fontSizes.xs,
           },

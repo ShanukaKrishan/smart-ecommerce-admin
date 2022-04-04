@@ -4,6 +4,7 @@ import {
   Avatar,
   Button,
   Center,
+  Checkbox,
   createStyles,
   Dialog,
   Group,
@@ -140,12 +141,12 @@ const Products: NextPage = () => {
   };
 
   const editProduct = (index: number) => {
-    // // get product
-    // const product = products[index];
-    // // set selected product
-    // setSelectedProduct(product);
-    // // go to edit screen
-    // router.push(`/products/${product.id}`);
+    // get product
+    const product = products[index];
+    // set selected product
+    setSelectedProduct(product);
+    // go to edit screen
+    router.push(`/products/${product.id}`);
   };
 
   /* ------------------------------ calculators ----------------------------- */
@@ -164,7 +165,9 @@ const Products: NextPage = () => {
       <td style={{ whiteSpace: 'nowrap' }}>LKR {element.price}</td>
       <td style={{ whiteSpace: 'nowrap' }}>{element.brand}</td>
       <td style={{ whiteSpace: 'nowrap' }}>{element.category}</td>
-      {/* <td>{element.category}</td> */}
+      <td style={{ whiteSpace: 'nowrap' }}>
+        <Checkbox ml={20} checked={element.featured} />
+      </td>
       <td>
         <Center>
           <ActionIcon
@@ -172,7 +175,7 @@ const Products: NextPage = () => {
             color="blue"
             radius="xl"
             size="lg"
-            // onClick={() => editCategory(index)}
+            onClick={() => editProduct(index)}
           >
             <IconPencil />
           </ActionIcon>
@@ -209,12 +212,13 @@ const Products: NextPage = () => {
         }
         headers={
           <tr>
-            <th></th>
+            <th style={{ width: 80 }}></th>
             <th>Name</th>
             <th>Description</th>
             <th>Price</th>
             <th>Brand</th>
             <th>Category</th>
+            <th style={{ width: 120 }}>Featured</th>
             <th style={{ width: 50 }}></th>
             <th style={{ width: 50 }}></th>
           </tr>

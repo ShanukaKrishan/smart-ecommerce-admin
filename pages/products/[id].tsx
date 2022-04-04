@@ -16,13 +16,7 @@ import {
   TextInput,
 } from '@mantine/core';
 import { useForm } from '@mantine/form';
-import {
-  IconAlertCircle,
-  IconCheck,
-  IconCircleMinus,
-  IconPhoto,
-  IconX,
-} from '@tabler/icons';
+import { IconAlertCircle, IconCheck, IconX } from '@tabler/icons';
 import { useRouter } from 'next/router';
 import React, { useEffect, useState } from 'react';
 import HomeLayout from '../../components/HomeLayout';
@@ -34,17 +28,17 @@ import {
   getDocs,
   doc,
   updateDoc,
+  getDoc,
 } from 'firebase/firestore';
 import {
   showErrorNotification,
   showSuccessNotification,
 } from '../../helpers/notification';
 import Product, { productConverter } from '../../models/product';
-import { Dropzone, DropzoneStatus, IMAGE_MIME_TYPE } from '@mantine/dropzone';
+import { Dropzone, IMAGE_MIME_TYPE } from '@mantine/dropzone';
 import Category, { categoryConverter } from '../../models/category';
 import Link from 'next/link';
-import Image from 'next/image';
-import { getStorage, ref, uploadBytes } from 'firebase/storage';
+import { deleteObject, getStorage, ref, uploadBytes } from 'firebase/storage';
 import { getExtension } from '../../helpers/string';
 import ImageDropzone from '../../components/ImageDropzone';
 import ImagePreview from '../../components/ImagePreview';
@@ -75,7 +69,9 @@ const CreateProduct = (): JSX.Element => {
 
   const [loading, setLoading] = useState(false);
 
-  const [createLoading, setCreateLoading] = useState(false);
+  const [saveLoading, setSaveLoading] = useState(false);
+
+  const [product, setProduct] = useState<Product>();
 
   const [categories, setCategories] = useState<Category[]>([]);
 
@@ -104,15 +100,95 @@ const CreateProduct = (): JSX.Element => {
         value == null || value == '' ? 'Please select an item' : null,
       price: (value) =>
         value <= 0 ? 'Price should be a positive number' : null,
-      image: (value) => (value == null ? 'Please select an image' : null),
     },
   });
 
   useEffect(() => {
+    const getProduct = async () => {
+      // get firestore
+      const firestore = getFirestore();
+      // create reference with converter
+      const ref = doc(
+        firestore,
+        'products',
+        router.query.id as string
+      ).withConverter(productConverter);
+      // get snapshot
+      const snapshot = await getDoc(ref);
+      // check snapshot contains data
+      if (!snapshot.exists()) {
+        // show notification
+        showErrorNotification('Product not found');
+        return;
+      }
+      // get product
+      const product = snapshot.data();
+      // save product
+      setProduct(product);
+      // update form
+      form.setValues({
+        name: product.name,
+        description: product.description,
+        brandId: product.brandId,
+        categoryId: product.categoryId,
+        featured: product.featured,
+        price: product.price,
+        image: null,
+      });
+    };
+
+    const getCategories = async () => {
+      // get firestore
+      const firestore = getFirestore();
+      // create reference with converter
+      const ref = collection(firestore, 'categories').withConverter(
+        categoryConverter
+      );
+      // build query
+      const queryRef = query(ref);
+      // get snapshot
+      const snapshots = await getDocs(queryRef);
+      // create category array
+      const categories: Category[] = [];
+      // iterate through snap shots
+      snapshots.forEach((snapshot) => {
+        // get category
+        const category = snapshot.data();
+        // add category to array
+        categories.push(category);
+      });
+      // save categories
+      setCategories(categories);
+    };
+
+    const getBrands = async () => {
+      // get firestore
+      const firestore = getFirestore();
+      // create reference with converter
+      const ref = collection(firestore, 'brands').withConverter(brandConverter);
+      // build query
+      const queryRef = query(ref);
+      // get snapshot
+      const snapshots = await getDocs(queryRef);
+      // create brand array
+      const brands: Brand[] = [];
+      // iterate through snap shots
+      snapshots.forEach((snapshot) => {
+        // get brand
+        const brand = snapshot.data();
+        // add brand to array
+        brands.push(brand);
+      });
+      // save brands
+      setBrands(brands);
+    };
+
     (async function () {
       try {
         // start loading
         setLoading(true);
+        // get product
+        await getProduct();
         // get categories
         await getCategories();
         // get brands
@@ -125,53 +201,8 @@ const CreateProduct = (): JSX.Element => {
         setLoading(false);
       }
     })();
-  }, []);
-
-  const getCategories = async () => {
-    // get firestore
-    const firestore = getFirestore();
-    // create reference with converter
-    const ref = collection(firestore, 'categories').withConverter(
-      categoryConverter
-    );
-    // build query
-    const queryRef = query(ref);
-    // get snapshot
-    const snapshots = await getDocs(queryRef);
-    // create category array
-    const categories: Category[] = [];
-    // iterate through snap shots
-    snapshots.forEach((snapshot) => {
-      // get category
-      const category = snapshot.data();
-      // add category to array
-      categories.push(category);
-    });
-    // save categories
-    setCategories(categories);
-  };
-
-  const getBrands = async () => {
-    // get firestore
-    const firestore = getFirestore();
-    // create reference with converter
-    const ref = collection(firestore, 'brands').withConverter(brandConverter);
-    // build query
-    const queryRef = query(ref);
-    // get snapshot
-    const snapshots = await getDocs(queryRef);
-    // create brand array
-    const brands: Brand[] = [];
-    // iterate through snap shots
-    snapshots.forEach((snapshot) => {
-      // get brand
-      const brand = snapshot.data();
-      // add brand to array
-      brands.push(brand);
-    });
-    // save brands
-    setBrands(brands);
-  };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [router.query.id]);
 
   /* ------------------------------- handlers ------------------------------- */
 
@@ -179,16 +210,31 @@ const CreateProduct = (): JSX.Element => {
     router.back();
   };
 
-  const uploadImage = async (
-    imageFile: File,
-    productId: string
-  ): Promise<string> => {
+  const updateImage = async (image: File | null) => {
+    // check image set
+    if (image == null) return;
+    // delete current image
+    await deleteCurrentImage();
+    // upload new image
+    await uploadImage(image);
+  };
+
+  const deleteCurrentImage = async () => {
+    // get storage
+    const storage = getStorage();
+    // create reference
+    const imageRef = ref(storage, product!.imagePath);
+    // delete image
+    await deleteObject(imageRef);
+  };
+
+  const uploadImage = async (imageFile: File): Promise<string> => {
     // get storage
     const storage = getStorage();
     // create reference
     const imageRef = ref(
       storage,
-      `products/${productId}.${getExtension(imageFile.name)}`
+      `products/${product!.id}.${getExtension(imageFile.name)}`
     );
     // upload image
     await uploadBytes(imageRef, imageFile);
@@ -196,69 +242,46 @@ const CreateProduct = (): JSX.Element => {
     return imageRef.fullPath;
   };
 
-  const createProduct = async (
+  const updateProduct = async (
     name: string,
     description: string,
-    categoryId: string,
     price: number,
+    categoryId: string,
     brandId: string,
     featured: boolean
-  ): Promise<string> => {
+  ) => {
     // get firestore
     const firestore = getFirestore();
     // create reference with converter
-    const ref = collection(firestore, 'products').withConverter(
-      productConverter
-    );
+    const ref = doc(firestore, 'products', product!.id);
     // add document to the database
-    const resultRef = await addDoc(
-      ref,
-      new Product(
-        '',
-        name,
-        description,
-        categoryId,
-        '',
-        price,
-        brandId,
-        '',
-        featured,
-        '',
-        ''
-      )
-    );
-    // return product id
-    return resultRef.id;
-  };
-
-  const updateProductImagePath = async (id: string, path: string) => {
-    // get firestore
-    const firestore = getFirestore();
-    // create reference with converter
-    const ref = doc(firestore, 'products', id).withConverter(productConverter);
-    // add document to the database
-    const resultRef = await updateDoc(ref, { imagePath: path });
+    await updateDoc(ref, {
+      name: name,
+      description: description,
+      price: price,
+      categoryId: categoryId,
+      brandId: brandId,
+      featured: featured,
+    });
   };
 
   const handleSubmit = async (values: typeof form.values) => {
     try {
       // start loading
-      setCreateLoading(true);
-      // create product
-      const productId = await createProduct(
+      setSaveLoading(true);
+      // update product
+      await updateProduct(
         values.name,
         values.description,
-        values.categoryId,
         values.price,
+        values.categoryId,
         values.brandId,
         values.featured
       );
-      // save image
-      const imagePath = await uploadImage(values.image!, productId);
-      // update image path in product
-      await updateProductImagePath(productId, imagePath);
+      // update image
+      await updateImage(values.image);
       // show success notification
-      showSuccessNotification('Successfully created product');
+      showSuccessNotification('Successfully updated product');
       // close page
       router.back();
     } catch (error) {
@@ -267,7 +290,7 @@ const CreateProduct = (): JSX.Element => {
       showErrorNotification('Error Occurred..');
     } finally {
       // stop loading
-      setCreateLoading(false);
+      setSaveLoading(false);
     }
   };
 
@@ -282,7 +305,7 @@ const CreateProduct = (): JSX.Element => {
       <Group px={40} className={classes.titleWrapper} position="apart">
         <Stack spacing={0}>
           <Text size="lg" weight={600}>
-            Create Product
+            Update Product
           </Text>
           <Text size="xs" color="gray">
             Products will be listed in the main store
@@ -298,9 +321,9 @@ const CreateProduct = (): JSX.Element => {
               leftIcon={<IconCheck />}
               form="create-product-form"
               type="submit"
-              loading={createLoading}
+              loading={saveLoading}
             >
-              Create
+              Save
             </Button>
           </Group>
         </MediaQuery>
@@ -468,9 +491,9 @@ const CreateProduct = (): JSX.Element => {
                   <Button
                     leftIcon={<IconCheck />}
                     type="submit"
-                    loading={createLoading}
+                    loading={saveLoading}
                   >
-                    Create
+                    Save
                   </Button>
                 </Group>
               </MediaQuery>

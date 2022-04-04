@@ -11,6 +11,7 @@ import {
 } from '@mantine/core';
 import {
   IconBrandAsana,
+  IconBrandBootstrap,
   IconDashboard,
   IconShoppingCart,
   IconUser,
@@ -88,6 +89,12 @@ const TheSideBar = (props: Props): JSX.Element => {
             icon={<IconBrandAsana size={20} />}
             path="categories"
             subPaths={['categories/create']}
+          />
+          <SideBarItem
+            title="Brands"
+            icon={<IconBrandBootstrap size={20} />}
+            path="brands"
+            subPaths={['brands/create']}
           />
           <SideBarItem
             title="Users"

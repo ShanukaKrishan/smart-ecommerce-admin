@@ -30,37 +30,26 @@ import { deleteObject, getStorage, ref, uploadBytes } from 'firebase/storage';
 import { getExtension } from '../../helpers/string';
 
 /* -------------------------------------------------------------------------- */
-/*                                 interfaces                                 */
-/* -------------------------------------------------------------------------- */
-
-interface FormValues {
-  name: string;
-  description: string;
-  image: File | null;
-}
-
-/* -------------------------------------------------------------------------- */
 /*                                  component                                 */
 /* -------------------------------------------------------------------------- */
 
-const EditCategory = (): JSX.Element => {
+const EditBrand = (): JSX.Element => {
   /* --------------------------------- hooks -------------------------------- */
 
   const [loading, setLoading] = useState(false);
 
   const [saveLoading, setSaveLoading] = useState(false);
 
-  const [category, setCategory] = useState<Category>();
+  const [brand, setBrand] = useState<Category>();
 
   const router = useRouter();
 
   const { classes } = useStyles();
 
-  const form = useForm<FormValues>({
+  const form = useForm({
     initialValues: {
       name: '',
       description: '',
-      image: null,
     },
     validate: {
       name: (value) => null,
@@ -78,7 +67,7 @@ const EditCategory = (): JSX.Element => {
         // create reference with converter
         const ref = doc(
           firestore,
-          'categories',
+          'brands',
           router.query.id as string
         ).withConverter(categoryConverter);
         // get snapshot
@@ -86,23 +75,22 @@ const EditCategory = (): JSX.Element => {
         // check snapshot contains data
         if (!snapshot.exists()) {
           // show notification
-          showErrorNotification('Category not found');
+          showErrorNotification('Brand not found');
           return;
         }
-        // get category
-        const category = snapshot.data();
+        // get brand
+        const brand = snapshot.data();
         // save category
-        setCategory(category);
+        setBrand(brand);
         // update form
         form.setValues({
-          name: category.name,
-          description: category.description,
-          image: null,
+          name: brand.name,
+          description: brand.description,
         });
       } catch (error) {
         console.log(error);
         // show notification
-        showErrorNotification('Fetching category failed');
+        showErrorNotification('Fetching brand failed');
       } finally {
         // stop loading
         setLoading(false);
@@ -117,43 +105,11 @@ const EditCategory = (): JSX.Element => {
     router.back();
   };
 
-  const updateImage = async (image: File | null) => {
-    // check image set
-    if (image == null) return;
-    // delete current image
-    await deleteCurrentImage();
-    // upload new image
-    await uploadImage(image);
-  };
-
-  const deleteCurrentImage = async () => {
-    // get storage
-    const storage = getStorage();
-    // create reference
-    const imageRef = ref(storage, category!.imagePath);
-    // delete image
-    await deleteObject(imageRef);
-  };
-
-  const uploadImage = async (imageFile: File): Promise<string> => {
-    // get storage
-    const storage = getStorage();
-    // create reference
-    const imageRef = ref(
-      storage,
-      `categories/${category!.id}.${getExtension(imageFile.name)}`
-    );
-    // upload image
-    await uploadBytes(imageRef, imageFile);
-    // return full path
-    return imageRef.fullPath;
-  };
-
-  const updateCategory = async (name: string, description: string) => {
+  const updateBrand = async (name: string, description: string) => {
     // get firestore
     const firestore = getFirestore();
     // create reference with converter
-    const ref = doc(firestore, 'categories', category!.id);
+    const ref = doc(firestore, 'brands', brand!.id);
     // add document to the database
     await updateDoc(ref, {
       name: name,
@@ -162,17 +118,15 @@ const EditCategory = (): JSX.Element => {
   };
 
   const handleSubmit = async (values: typeof form.values) => {
-    // check category exist
-    if (category == null) return;
+    // check brand exist
+    if (brand == null) return;
     try {
       // start loading
       setSaveLoading(true);
-      // update category
-      await updateCategory(values.name, values.description);
-      // update image
-      await updateImage(values.image);
+      // update brand
+      await updateBrand(values.name, values.description);
       // show success notification
-      showSuccessNotification('Successfully updated category');
+      showSuccessNotification('Successfully updated brand');
       // close page
       router.back();
     } catch (error) {
@@ -183,10 +137,6 @@ const EditCategory = (): JSX.Element => {
       // stop loading
       setSaveLoading(false);
     }
-  };
-
-  const removeImage = () => {
-    form.setFieldValue('image', null);
   };
 
   /* -------------------------------- render -------------------------------- */
@@ -228,47 +178,6 @@ const EditCategory = (): JSX.Element => {
             onSubmit={form.onSubmit(handleSubmit)}
           >
             <Stack spacing={0}>
-              <FormCategory
-                label={
-                  <FormCategoryLabel
-                    title="Image"
-                    description="Category image use to show categories in home page"
-                  />
-                }
-              >
-                {form.values.image == null && (
-                  <Dropzone
-                    multiple={false}
-                    onDrop={(files) => {
-                      form.setFieldValue('image', files[0]);
-                    }}
-                    onReject={(rejections) => {
-                      console.log(rejections);
-                    }}
-                    maxSize={5 * 1024 ** 2}
-                    accept={IMAGE_MIME_TYPE}
-                    style={{
-                      height: 200,
-                      borderColor:
-                        form.errors.image != null ? 'red' : undefined,
-                    }}
-                  >
-                    {(status) => (
-                      <ImageDropzone
-                        status={status}
-                        error={form.errors.image}
-                      />
-                    )}
-                  </Dropzone>
-                )}
-                {form.values.image != null && (
-                  <ImagePreview
-                    src={URL.createObjectURL(form.values.image)}
-                    onRemoveImage={removeImage}
-                  />
-                )}
-              </FormCategory>
-              <Divider my={12} mt={20} />
               <FormCategory
                 label={
                   <FormCategoryLabel
@@ -358,6 +267,6 @@ const useStyles = createStyles((theme) => {
 /*                                   exports                                  */
 /* -------------------------------------------------------------------------- */
 
-(EditCategory as any).Layout = HomeLayout;
+(EditBrand as any).Layout = HomeLayout;
 
-export default EditCategory;
+export default EditBrand;

@@ -6,6 +6,7 @@ import {
   SnapshotOptions,
 } from 'firebase/firestore';
 import { getDownloadURL, getStorage, ref } from 'firebase/storage';
+import { brandConverter } from './brand';
 import { categoryConverter } from './category';
 
 export default class Product {
@@ -15,7 +16,9 @@ export default class Product {
   categoryId: string;
   category: string;
   price: number;
+  brandId: string;
   brand: string;
+  featured: boolean;
   imagePath: string;
   imageUrl: string;
 
@@ -26,7 +29,9 @@ export default class Product {
     categoryId: string,
     category: string,
     price: number,
+    brandId: string,
     brand: string,
+    featured: boolean,
     imagePath: string,
     imageUrl: string
   ) {
@@ -36,7 +41,9 @@ export default class Product {
     this.categoryId = categoryId;
     this.category = category;
     this.price = price;
+    this.brandId = brandId;
     this.brand = brand;
+    this.featured = featured;
     this.imagePath = imagePath;
     this.imageUrl = imageUrl;
   }
@@ -44,6 +51,8 @@ export default class Product {
   async initialize() {
     // get category name
     await this.getCategoryName();
+    // get brand name
+    await this.getBrandName();
     // get image url from path
     await this.getImageUrl();
   }
@@ -61,6 +70,22 @@ export default class Product {
     if (snapshot.exists()) {
       // save category name
       this.category = snapshot.data().name;
+    }
+  }
+
+  async getBrandName() {
+    // get firestore
+    const firestore = getFirestore();
+    // create reference with converter
+    const ref = doc(firestore, 'brands', this.brandId).withConverter(
+      brandConverter
+    );
+    // get snapshot
+    const snapshot = await getDoc(ref);
+    // check snapshot contains data
+    if (snapshot.exists()) {
+      // save category name
+      this.brand = snapshot.data().name;
     }
   }
 
@@ -82,7 +107,8 @@ export const productConverter = {
     description: product.description,
     categoryId: product.categoryId,
     price: product.price,
-    brand: product.brand,
+    brandId: product.brandId,
+    featured: product.featured,
     imagePath: product.imagePath,
   }),
   fromFirestore: (
@@ -97,7 +123,9 @@ export const productConverter = {
       data.categoryId,
       '',
       data.price,
-      data.brand,
+      data.brandId,
+      '',
+      data.featured,
       data.imagePath,
       ''
     );
