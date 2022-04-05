@@ -37,6 +37,7 @@ import FormCategoryLabel from '../../components/form/FormCategoryLabel';
 import FormCategory from '../../components/form/FormCategory';
 import { getStorage, ref, uploadBytes } from 'firebase/storage';
 import { getExtension } from '../../helpers/string';
+import Head from 'next/head';
 
 /* -------------------------------------------------------------------------- */
 /*                                 interfaces                                 */
@@ -159,6 +160,12 @@ const CreateCategory = (): JSX.Element => {
 
   return (
     <Stack className={classes.body} align="stretch">
+      {/* head */}
+      <Head>
+        <title>Smart Ecommerce Store Admin - Create Category</title>
+        <link rel="icon" href="/favicon.ico" />
+      </Head>
+      {/* body */}
       <Group px={40} className={classes.titleWrapper} position="apart">
         <Stack spacing={0}>
           <Text size="lg" weight={600}>

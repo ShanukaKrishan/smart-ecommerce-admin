@@ -9,22 +9,22 @@ const initAuth = (): void => {
     logoutAPIEndpoint: '/api/logout',
     firebaseAdminInitConfig: {
       credential: {
-        projectId: 'ar-watch-store-app',
+        projectId: 'ar-watch-store-e169b',
         clientEmail:
-          'firebase-adminsdk-672ha@ar-watch-store-app.iam.gserviceaccount.com',
+          'firebase-adminsdk-6vnhn@ar-watch-store-e169b.iam.gserviceaccount.com',
         privateKey:
           process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/gm, '\n') ?? '',
       },
       databaseURL: 'https://my-example-app.firebaseio.com',
     },
     firebaseClientInitConfig: {
-      apiKey: 'AIzaSyAApD3e7P9-MyXRhM37Yp8O7JR7F9yh2mM',
-      authDomain: 'ar-watch-store-app.firebaseapp.com',
-      projectId: 'ar-watch-store-app',
-      storageBucket: 'ar-watch-store-app.appspot.com',
-      messagingSenderId: '1092598350127',
-      appId: '1:1092598350127:web:47e308d65834f77c5661da',
-      measurementId: 'G-R3K4TS90SE',
+      apiKey: 'AIzaSyB5vmWHbV9eYkhi_2pmfvb6gR0hdMxIWN4',
+      authDomain: 'ar-watch-store-e169b.firebaseapp.com',
+      projectId: 'ar-watch-store-e169b',
+      storageBucket: 'ar-watch-store-e169b.appspot.com',
+      messagingSenderId: '676758483408',
+      appId: '1:676758483408:web:2c79076faa6dee624189d5',
+      measurementId: 'G-22C16XYBJX',
     },
     cookies: {
       name: 'Smart Ecommerce',

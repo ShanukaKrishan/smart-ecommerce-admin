@@ -37,6 +37,7 @@ import {
 import { useRouter } from 'next/router';
 import { deleteObject, getStorage, ref } from 'firebase/storage';
 import { async } from '@firebase/util';
+import Head from 'next/head';
 
 /* -------------------------------------------------------------------------- */
 /*                                 components                                 */
@@ -196,6 +197,12 @@ const Catagories = (): JSX.Element => {
 
   return (
     <div className={classes.body}>
+      {/* head */}
+      <Head>
+        <title>Smart Ecommerce Store Admin - Categories</title>
+        <link rel="icon" href="/favicon.ico" />
+      </Head>
+      {/* body */}
       <DataTable
         title="Categories"
         loading={!categoriesFetched}

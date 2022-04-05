@@ -37,6 +37,7 @@ import { useRouter } from 'next/router';
 import { deleteObject, getStorage, ref } from 'firebase/storage';
 import { async } from '@firebase/util';
 import Brand, { brandConverter } from '../../models/brand';
+import Head from 'next/head';
 
 /* -------------------------------------------------------------------------- */
 /*                                 components                                 */
@@ -177,6 +178,12 @@ const Brands = (): JSX.Element => {
 
   return (
     <div className={classes.body}>
+      {/* head */}
+      <Head>
+        <title>Smart Ecommerce Store Admin - Brands</title>
+        <link rel="icon" href="/favicon.ico" />
+      </Head>
+      {/* body */}
       <DataTable
         title="Brands"
         loading={!brandsFetched}

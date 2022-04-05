@@ -24,6 +24,7 @@ import {
   showErrorNotification,
   showSuccessNotification,
 } from '../helpers/notification';
+import Head from 'next/head';
 
 /* -------------------------------------------------------------------------- */
 /*                                  component                                 */
@@ -87,6 +88,12 @@ const Login: NextPage = () => {
 
   return (
     <Center className={classes.body}>
+      {/* head */}
+      <Head>
+        <title>Smart Ecommerce Store Admin - Login</title>
+        <link rel="icon" href="/favicon.ico" />
+      </Head>
+      {/* body */}
       <Stack spacing={24} align="stretch" className={classes.content}>
         <Stack spacing={4} align="center">
           <motion.div

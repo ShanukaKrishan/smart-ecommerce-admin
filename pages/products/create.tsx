@@ -51,6 +51,7 @@ import ImagePreview from '../../components/ImagePreview';
 import FormCategory from '../../components/form/FormCategory';
 import FormCategoryLabel from '../../components/form/FormCategoryLabel';
 import Brand, { brandConverter } from '../../models/brand';
+import Head from 'next/head';
 
 /* -------------------------------------------------------------------------- */
 /*                                 interfaces                                 */
@@ -279,6 +280,12 @@ const CreateProduct = (): JSX.Element => {
 
   return (
     <Stack className={classes.body} align="stretch">
+      {/* head */}
+      <Head>
+        <title>Smart Ecommerce Store Admin - Create Product</title>
+        <link rel="icon" href="/favicon.ico" />
+      </Head>
+      {/* body */}
       <Group px={40} className={classes.titleWrapper} position="apart">
         <Stack spacing={0}>
           <Text size="lg" weight={600}>

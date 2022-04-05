@@ -28,6 +28,7 @@ import {
 } from 'firebase/firestore';
 import { deleteObject, getStorage, ref } from 'firebase/storage';
 import { NextPage } from 'next';
+import Head from 'next/head';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import React, { useEffect, useState } from 'react';
@@ -201,6 +202,12 @@ const Products: NextPage = () => {
 
   return (
     <div className={classes.body}>
+      {/* head */}
+      <Head>
+        <title>Smart Ecommerce Store Admin - Products</title>
+        <link rel="icon" href="/favicon.ico" />
+      </Head>
+      {/* body */}
       <DataTable
         title="Products"
         loading={!productsFetched}
