@@ -520,6 +520,7 @@ const useStyles = createStyles((theme, _, getRef) => {
     form: {
       width: '60%',
       height: '100%',
+      marginBottom: 40,
       [`@media (max-width: ${theme.breakpoints.sm}px)`]: {
         width: '100%',
       },

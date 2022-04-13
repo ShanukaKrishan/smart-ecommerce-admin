@@ -11,6 +11,22 @@ const MantineTheme = ({ children }: Props): JSX.Element => {
 
   const theme: MantineThemeOverride = {
     fontFamily: ['Montserrat'].join(','),
+    colors: {
+      accent: [
+        '#ffefe8',
+        '#a37f71',
+        '#a37f71',
+        '#a37f71',
+        '#a37f71',
+        '#a37f71',
+        '#a37f71',
+        // '#87675b',
+        '#a37f71',
+        '#a37f71',
+        '#a37f71',
+      ],
+    },
+    primaryColor: 'accent',
   };
 
   /* -------------------------------- render -------------------------------- */

@@ -13,6 +13,7 @@ import {
   IconBrandAsana,
   IconBrandBootstrap,
   IconDashboard,
+  IconMessages,
   IconShoppingCart,
   IconUser,
 } from '@tabler/icons';
@@ -100,6 +101,11 @@ const TheSideBar = (props: Props): JSX.Element => {
             title="Users"
             icon={<IconUser size={20} />}
             path="users"
+          />
+          <SideBarItem
+            title="Chat"
+            icon={<IconMessages size={20} />}
+            path="chat"
           />
         </Stack>
       </Navbar.Section>

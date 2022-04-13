@@ -162,7 +162,7 @@ const Products: NextPage = () => {
         />
       </td>
       <td style={{ whiteSpace: 'nowrap' }}>{element.name}</td>
-      <td style={{ whiteSpace: 'nowrap' }}>{element.description}</td>
+      <td style={{ minWidth: '250px' }}>{element.description}</td>
       <td style={{ whiteSpace: 'nowrap' }}>LKR {element.price}</td>
       <td style={{ whiteSpace: 'nowrap' }}>{element.brand}</td>
       <td style={{ whiteSpace: 'nowrap' }}>{element.category}</td>
@@ -173,7 +173,7 @@ const Products: NextPage = () => {
         <Center>
           <ActionIcon
             variant="light"
-            color="blue"
+            color="accent"
             radius="xl"
             size="lg"
             onClick={() => editProduct(index)}

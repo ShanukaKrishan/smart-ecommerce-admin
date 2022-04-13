@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: admin-web
-          image: asia-southeast1-docker.pkg.dev/docme-317706/smart-ecommerce/admin-web:Production_0.0.4
+          image: asia-southeast1-docker.pkg.dev/docme-317706/smart-ecommerce/admin-web:Production_0.0.5
           resources:
             requests:
               memory: '512Mi'
