@@ -84,7 +84,7 @@ const useStyles = createStyles((theme, { selected }: StyleProps) => {
       transition: 'all 0.2s',
       userSelect: 'none',
       borderRadius: theme.radius.sm,
-      backgroundColor: selected ? theme.colors.blue[0] : 'transparent',
+      backgroundColor: selected ? theme.colors.accent[0] : 'transparent',
       '&:hover': {
         backgroundColor: selected ? theme.colors.blue[0] : theme.colors.gray[0],
       },
