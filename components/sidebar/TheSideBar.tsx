@@ -15,6 +15,7 @@ import {
   IconDashboard,
   IconMessages,
   IconShoppingCart,
+  IconTruckDelivery,
   IconUser,
 } from '@tabler/icons';
 import React from 'react';
@@ -84,6 +85,11 @@ const TheSideBar = (props: Props): JSX.Element => {
             icon={<IconShoppingCart size={20} />}
             path="products"
             subPaths={['products/create']}
+          />
+          <SideBarItem
+            title="Orders"
+            icon={<IconTruckDelivery size={20} />}
+            path="orders"
           />
           <SideBarItem
             title="Categories"

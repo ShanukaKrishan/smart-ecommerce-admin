@@ -16,13 +16,7 @@ import {
   TextInput,
 } from '@mantine/core';
 import { useForm } from '@mantine/form';
-import {
-  IconAlertCircle,
-  IconCheck,
-  IconCircleMinus,
-  IconPhoto,
-  IconX,
-} from '@tabler/icons';
+import { IconAlertCircle, IconCheck, IconX } from '@tabler/icons';
 import { useRouter } from 'next/router';
 import React, { useEffect, useState } from 'react';
 import HomeLayout from '../../components/HomeLayout';
@@ -40,10 +34,9 @@ import {
   showSuccessNotification,
 } from '../../helpers/notification';
 import Product, { productConverter } from '../../models/product';
-import { Dropzone, DropzoneStatus, IMAGE_MIME_TYPE } from '@mantine/dropzone';
+import { Dropzone, IMAGE_MIME_TYPE } from '@mantine/dropzone';
 import Category, { categoryConverter } from '../../models/category';
 import Link from 'next/link';
-import Image from 'next/image';
 import { getStorage, ref, uploadBytes } from 'firebase/storage';
 import { getExtension } from '../../helpers/string';
 import ImageDropzone from '../../components/ImageDropzone';
@@ -52,13 +45,14 @@ import FormCategory from '../../components/form/FormCategory';
 import FormCategoryLabel from '../../components/form/FormCategoryLabel';
 import Brand, { brandConverter } from '../../models/brand';
 import Head from 'next/head';
+import { v4 as uuid } from 'uuid';
 
 /* -------------------------------------------------------------------------- */
 /*                                 interfaces                                 */
 /* -------------------------------------------------------------------------- */
 
 interface FormValues {
-  image: File | null;
+  images: File[];
   name: string;
   description: string;
   categoryId: string;
@@ -93,7 +87,7 @@ const CreateProduct = (): JSX.Element => {
       categoryId: '',
       brandId: '',
       price: 0,
-      image: null,
+      images: [],
       featured: false,
     },
     validate: {
@@ -105,7 +99,8 @@ const CreateProduct = (): JSX.Element => {
         value == null || value == '' ? 'Please select an item' : null,
       price: (value) =>
         value <= 0 ? 'Price should be a positive number' : null,
-      image: (value) => (value == null ? 'Please select an image' : null),
+      images: (value) =>
+        value.length === 0 ? 'Please select at least one image' : null,
     },
   });
 
@@ -189,7 +184,7 @@ const CreateProduct = (): JSX.Element => {
     // create reference
     const imageRef = ref(
       storage,
-      `products/${productId}.${getExtension(imageFile.name)}`
+      `products/${productId}-${uuid()}.${getExtension(imageFile.name)}}`
     );
     // upload image
     await uploadBytes(imageRef, imageFile);
@@ -224,21 +219,21 @@ const CreateProduct = (): JSX.Element => {
         brandId,
         '',
         featured,
-        '',
-        ''
+        [],
+        []
       )
     );
     // return product id
     return resultRef.id;
   };
 
-  const updateProductImagePath = async (id: string, path: string) => {
+  const updateProductImagePaths = async (id: string, paths: string[]) => {
     // get firestore
     const firestore = getFirestore();
     // create reference with converter
     const ref = doc(firestore, 'products', id).withConverter(productConverter);
     // add document to the database
-    const resultRef = await updateDoc(ref, { imagePath: path });
+    await updateDoc(ref, { imagePaths: paths });
   };
 
   const handleSubmit = async (values: typeof form.values) => {
@@ -254,10 +249,16 @@ const CreateProduct = (): JSX.Element => {
         values.brandId,
         values.featured
       );
-      // save image
-      const imagePath = await uploadImage(values.image!, productId);
+      // create image path array
+      const imagePaths: string[] = [];
+      // save images
+      for (const image of values.images) {
+        const imagePath = await uploadImage(image, productId);
+        // add image path to array
+        imagePaths.push(imagePath);
+      }
       // update image path in product
-      await updateProductImagePath(productId, imagePath);
+      await updateProductImagePaths(productId, imagePaths);
       // show success notification
       showSuccessNotification('Successfully created product');
       // close page
@@ -272,9 +273,24 @@ const CreateProduct = (): JSX.Element => {
     }
   };
 
-  const removeImage = () => {
-    form.setFieldValue('image', null);
+  const removeImage = (index: number) => {
+    // get current images array
+    const images = form.values.images;
+    // remove image using index
+    images.splice(index, 1);
+    // set images
+    form.setFieldValue('images', images);
   };
+
+  /* -------------------------------- helpers ------------------------------- */
+
+  const images = form.values.images.map((image, index) => (
+    <ImagePreview
+      key={index}
+      src={URL.createObjectURL(image)}
+      onRemoveImage={() => removeImage(index)}
+    />
+  ));
 
   /* -------------------------------- render -------------------------------- */
 
@@ -320,46 +336,37 @@ const CreateProduct = (): JSX.Element => {
             className={classes.form}
             onSubmit={form.onSubmit(handleSubmit)}
           >
-            <Stack align="stretch" spacing={0}>
+            <Stack pb={28} align="stretch" spacing={0}>
               <FormCategory
                 label={
                   <FormCategoryLabel
-                    title="Image"
+                    title="Images"
                     description="Product image use to show products in products page"
                   />
                 }
               >
-                {form.values.image == null && (
-                  <Dropzone
-                    multiple={false}
-                    onDrop={(files) => {
-                      form.setFieldValue('image', files[0]);
-                    }}
-                    onReject={(rejections) => {
-                      console.log(rejections);
-                    }}
-                    maxSize={5 * 1024 ** 2}
-                    accept={IMAGE_MIME_TYPE}
-                    style={{
-                      height: 200,
-                      borderColor:
-                        form.errors.image != null ? 'red' : undefined,
-                    }}
-                  >
-                    {(status) => (
-                      <ImageDropzone
-                        status={status}
-                        error={form.errors.image}
-                      />
-                    )}
-                  </Dropzone>
-                )}
-                {form.values.image != null && (
-                  <ImagePreview
-                    src={URL.createObjectURL(form.values.image)}
-                    onRemoveImage={removeImage}
-                  />
-                )}
+                {images}
+                <Dropzone
+                  onDrop={(files) => {
+                    form.setFieldValue('images', [
+                      ...form.values.images,
+                      ...files,
+                    ]);
+                  }}
+                  onReject={(rejections) => {
+                    console.log(rejections);
+                  }}
+                  maxSize={5 * 1024 ** 2}
+                  accept={IMAGE_MIME_TYPE}
+                  style={{
+                    height: 200,
+                    borderColor: form.errors.image != null ? 'red' : undefined,
+                  }}
+                >
+                  {(status) => (
+                    <ImageDropzone status={status} error={form.errors.image} />
+                  )}
+                </Dropzone>
               </FormCategory>
               <Divider my={16} mt={24} />
               <FormCategory
@@ -464,7 +471,7 @@ const CreateProduct = (): JSX.Element => {
                 />
               </FormCategory>
               <MediaQuery largerThan="sm" styles={{ display: 'none' }}>
-                <Group my={28} grow>
+                <Group mt={28} grow>
                   <Button
                     variant="outline"
                     leftIcon={<IconX />}

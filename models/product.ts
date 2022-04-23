@@ -9,6 +9,11 @@ import { getDownloadURL, getStorage, ref } from 'firebase/storage';
 import { brandConverter } from './brand';
 import { categoryConverter } from './category';
 
+interface ProductImage {
+  path: string;
+  url: string;
+}
+
 export default class Product {
   id: string;
   name: string;
@@ -19,8 +24,8 @@ export default class Product {
   brandId: string;
   brand: string;
   featured: boolean;
-  imagePath: string;
-  imageUrl: string;
+  imagePaths: string[];
+  images: ProductImage[];
 
   constructor(
     id: string,
@@ -32,8 +37,8 @@ export default class Product {
     brandId: string,
     brand: string,
     featured: boolean,
-    imagePath: string,
-    imageUrl: string
+    imagePaths: string[],
+    images: ProductImage[]
   ) {
     this.id = id;
     this.name = name;
@@ -44,8 +49,8 @@ export default class Product {
     this.brandId = brandId;
     this.brand = brand;
     this.featured = featured;
-    this.imagePath = imagePath;
-    this.imageUrl = imageUrl;
+    this.imagePaths = imagePaths;
+    this.images = images;
   }
 
   async initialize() {
@@ -54,7 +59,7 @@ export default class Product {
     // get brand name
     await this.getBrandName();
     // get image url from path
-    await this.getImageUrl();
+    await this.getImageUrls();
   }
 
   async getCategoryName() {
@@ -89,15 +94,27 @@ export default class Product {
     }
   }
 
-  async getImageUrl() {
+  async getImageUrls() {
+    // create images array
+    const images: ProductImage[] = [];
     // get storage
     const storage = getStorage();
-    // create reference
-    const imageRef = ref(storage, this.imagePath);
-    // get image url
-    const imageUrl = await getDownloadURL(imageRef);
-    // save url
-    this.imageUrl = imageUrl;
+    // iterate through image paths
+    for (const imagePath of this.imagePaths) {
+      // create reference
+      const imageRef = ref(storage, imagePath);
+      // get image url
+      const imageUrl = await getDownloadURL(imageRef);
+      // create product image
+      const productImage: ProductImage = {
+        path: imagePath,
+        url: imageUrl,
+      };
+      // add image to array
+      images.push(productImage);
+    }
+    // save image
+    this.images = images;
   }
 }
 
@@ -109,7 +126,7 @@ export const productConverter = {
     price: product.price,
     brandId: product.brandId,
     featured: product.featured,
-    imagePath: product.imagePath,
+    imagePaths: product.imagePaths,
   }),
   fromFirestore: (
     snapshot: QueryDocumentSnapshot,
@@ -126,8 +143,8 @@ export const productConverter = {
       data.brandId,
       '',
       data.featured,
-      data.imagePath,
-      ''
+      data.imagePaths,
+      []
     );
   },
 };

@@ -52,7 +52,7 @@ import Head from 'next/head';
 /* -------------------------------------------------------------------------- */
 
 interface FormValues {
-  image: File | null;
+  images: File[];
   name: string;
   description: string;
   categoryId: string;
@@ -78,6 +78,8 @@ const CreateProduct = (): JSX.Element => {
 
   const [brands, setBrands] = useState<Brand[]>([]);
 
+  const [removableImagePaths, setRemovableImagePaths] = useState<string[]>([]);
+
   const router = useRouter();
 
   const { classes } = useStyles();
@@ -89,7 +91,7 @@ const CreateProduct = (): JSX.Element => {
       categoryId: '',
       brandId: '',
       price: 0,
-      image: null,
+      images: [],
       featured: false,
     },
     validate: {
@@ -124,6 +126,8 @@ const CreateProduct = (): JSX.Element => {
       }
       // get product
       const product = snapshot.data();
+      // initialize product
+      await product.initialize();
       // save product
       setProduct(product);
       // update form
@@ -134,7 +138,7 @@ const CreateProduct = (): JSX.Element => {
         categoryId: product.categoryId,
         featured: product.featured,
         price: product.price,
-        image: null,
+        images: [],
       });
     };
 
@@ -211,36 +215,67 @@ const CreateProduct = (): JSX.Element => {
     router.back();
   };
 
-  const updateImage = async (image: File | null) => {
-    // check image set
-    if (image == null) return;
-    // delete current image
-    await deleteCurrentImage();
+  const updateImages = async (images: File[]) => {
+    // delete removable images
+    await deleteRemovableImages();
+    // create new image paths
+    let newImagePaths: string[] = [];
     // upload new image
-    await uploadImage(image);
-  };
-
-  const deleteCurrentImage = async () => {
-    // get storage
-    const storage = getStorage();
-    // create reference
-    const imageRef = ref(storage, product!.imagePath);
-    // delete image
-    await deleteObject(imageRef);
-  };
-
-  const uploadImage = async (imageFile: File): Promise<string> => {
-    // get storage
-    const storage = getStorage();
-    // create reference
-    const imageRef = ref(
-      storage,
-      `products/${product!.id}.${getExtension(imageFile.name)}`
+    if (images != null && images.length !== 0) {
+      newImagePaths = await uploadImages(images);
+    }
+    // get current image paths
+    let currentImagePaths = product?.imagePaths ?? [];
+    // remove removable paths from current paths
+    currentImagePaths = currentImagePaths.filter(
+      (item) => !removableImagePaths.includes(item)
     );
-    // upload image
-    await uploadBytes(imageRef, imageFile);
-    // return full path
-    return imageRef.fullPath;
+    // update image paths in product
+    await updateProductImagePaths([...currentImagePaths, ...newImagePaths]);
+  };
+
+  const deleteRemovableImages = async () => {
+    // get storage
+    const storage = getStorage();
+    // iterate through image paths
+    for (const imagePath of removableImagePaths) {
+      // create reference
+      const imageRef = ref(storage, imagePath);
+      // delete image
+      await deleteObject(imageRef);
+    }
+  };
+
+  const uploadImages = async (imageFiles: File[]): Promise<string[]> => {
+    // get storage
+    const storage = getStorage();
+    // create image path array
+    const imagePaths: string[] = [];
+    // iterate through images
+    for (const [index, imageFile] of imageFiles.entries()) {
+      // create reference
+      const imageRef = ref(
+        storage,
+        `products/${product!.id}.${getExtension(imageFile.name)}-${index}`
+      );
+      // upload image
+      await uploadBytes(imageRef, imageFile);
+      // add image path to array
+      imagePaths.push(imageRef.fullPath);
+    }
+    // return paths
+    return imagePaths;
+  };
+
+  const updateProductImagePaths = async (imagePaths: string[]) => {
+    // get firestore
+    const firestore = getFirestore();
+    // create reference with converter
+    const ref = doc(firestore, 'products', product!.id);
+    // add document to the database
+    await updateDoc(ref, {
+      imagePaths: imagePaths,
+    });
   };
 
   const updateProduct = async (
@@ -280,7 +315,7 @@ const CreateProduct = (): JSX.Element => {
         values.featured
       );
       // update image
-      await updateImage(values.image);
+      await updateImages(values.images);
       // show success notification
       showSuccessNotification('Successfully updated product');
       // close page
@@ -295,9 +330,49 @@ const CreateProduct = (): JSX.Element => {
     }
   };
 
-  const removeImage = () => {
-    form.setFieldValue('image', null);
+  const removeImage = (index: number) => {
+    // get current images array
+    const images = form.values.images;
+    // remove image using index
+    images.splice(index, 1);
+    // set images
+    form.setFieldValue('images', images);
   };
+
+  /* -------------------------------- helpers ------------------------------- */
+
+  const currentImages = product?.images.map((image, index) => (
+    <ImagePreview
+      key={index}
+      markedAsRemoved={removableImagePaths.includes(image.path)}
+      src={image.url}
+      overlayMessage="Click here to mark as removed"
+      onRemoveImage={() => {
+        // get image path
+        const selectedImagePath = image.path;
+        // check removable array contains current image path
+        if (removableImagePaths.includes(selectedImagePath)) {
+          // remove path from array
+          setRemovableImagePaths([
+            ...removableImagePaths.filter((item) => item !== selectedImagePath),
+          ]);
+        } else {
+          const paths = removableImagePaths;
+          paths.push(selectedImagePath);
+          // add path to array
+          setRemovableImagePaths([...paths]);
+        }
+      }}
+    />
+  ));
+
+  const newImages = form.values.images.map((image, index) => (
+    <ImagePreview
+      key={index}
+      src={URL.createObjectURL(image)}
+      onRemoveImage={() => removeImage(index)}
+    />
+  ));
 
   /* -------------------------------- render -------------------------------- */
 
@@ -347,42 +422,34 @@ const CreateProduct = (): JSX.Element => {
               <FormCategory
                 label={
                   <FormCategoryLabel
-                    title="Image"
+                    title="Images"
                     description="Product image use to show products in products page"
                   />
                 }
               >
-                {form.values.image == null && (
-                  <Dropzone
-                    multiple={false}
-                    onDrop={(files) => {
-                      form.setFieldValue('image', files[0]);
-                    }}
-                    onReject={(rejections) => {
-                      console.log(rejections);
-                    }}
-                    maxSize={5 * 1024 ** 2}
-                    accept={IMAGE_MIME_TYPE}
-                    style={{
-                      height: 200,
-                      borderColor:
-                        form.errors.image != null ? 'red' : undefined,
-                    }}
-                  >
-                    {(status) => (
-                      <ImageDropzone
-                        status={status}
-                        error={form.errors.image}
-                      />
-                    )}
-                  </Dropzone>
-                )}
-                {form.values.image != null && (
-                  <ImagePreview
-                    src={URL.createObjectURL(form.values.image)}
-                    onRemoveImage={removeImage}
-                  />
-                )}
+                {currentImages}
+                {newImages}
+                <Dropzone
+                  onDrop={(files) => {
+                    form.setFieldValue('images', [
+                      ...form.values.images,
+                      ...files,
+                    ]);
+                  }}
+                  onReject={(rejections) => {
+                    console.log(rejections);
+                  }}
+                  maxSize={5 * 1024 ** 2}
+                  accept={IMAGE_MIME_TYPE}
+                  style={{
+                    height: 200,
+                    borderColor: form.errors.image != null ? 'red' : undefined,
+                  }}
+                >
+                  {(status) => (
+                    <ImageDropzone status={status} error={form.errors.image} />
+                  )}
+                </Dropzone>
               </FormCategory>
               <Divider my={16} mt={24} />
               <FormCategory

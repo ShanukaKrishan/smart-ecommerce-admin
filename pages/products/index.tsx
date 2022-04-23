@@ -129,10 +129,13 @@ const Products: NextPage = () => {
       await deleteDoc(documentRef);
       // get storage
       const storage = getStorage();
-      // create reference
-      const imageRef = ref(storage, product.imagePath);
-      // delete image
-      await deleteObject(imageRef);
+      // iterate through images
+      for (const imagePath of product.imagePaths) {
+        // create reference
+        const imageRef = ref(storage, imagePath);
+        // delete image
+        await deleteObject(imageRef);
+      }
       // show notification
       showSuccessNotification('Successfully deleted product');
     } catch (error) {
@@ -156,7 +159,7 @@ const Products: NextPage = () => {
     <tr key={index}>
       <td>
         <Avatar
-          src={element.imageUrl}
+          src={element.images[0].url}
           radius="xl"
           imageProps={{ style: { objectFit: 'cover' } }}
         />
@@ -167,7 +170,7 @@ const Products: NextPage = () => {
       <td style={{ whiteSpace: 'nowrap' }}>{element.brand}</td>
       <td style={{ whiteSpace: 'nowrap' }}>{element.category}</td>
       <td style={{ whiteSpace: 'nowrap' }}>
-        <Checkbox ml={20} checked={element.featured} />
+        <Checkbox ml={20} checked={element.featured} onChange={() => {}} />
       </td>
       <td>
         <Center>

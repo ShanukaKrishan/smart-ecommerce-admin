@@ -1,4 +1,4 @@
-import { Box, Center, createStyles, Group, Text } from '@mantine/core';
+import { Box, Center, createStyles, Group, Stack, Text } from '@mantine/core';
 import { IconCircleMinus } from '@tabler/icons';
 import Image from 'next/image';
 import React from 'react';
@@ -8,6 +8,8 @@ import React from 'react';
 /* -------------------------------------------------------------------------- */
 
 interface Props {
+  overlayMessage?: string;
+  markedAsRemoved?: boolean;
   src: string;
   onRemoveImage: () => void;
 }
@@ -16,7 +18,12 @@ interface Props {
 /*                                 components                                 */
 /* -------------------------------------------------------------------------- */
 
-const ImagePreview = ({ src, onRemoveImage }: Props): JSX.Element => {
+const ImagePreview = ({
+  overlayMessage,
+  markedAsRemoved = false,
+  src,
+  onRemoveImage,
+}: Props): JSX.Element => {
   /* --------------------------------- hooks -------------------------------- */
 
   const { classes } = useStyles();
@@ -24,15 +31,35 @@ const ImagePreview = ({ src, onRemoveImage }: Props): JSX.Element => {
   /* -------------------------------- render -------------------------------- */
 
   return (
-    <Box className={classes.imageWrapper}>
+    <Box mb={16} className={classes.imageWrapper}>
       <Image layout="fill" objectFit="cover" src={src} alt="Product Image" />
-      <div className={classes.imageOverlay}></div>
-      <Center className={classes.imageOverlayContent} onClick={onRemoveImage}>
-        <Group>
-          <IconCircleMinus color="white" />
-          <Text color="white">Click here to remove the image</Text>
-        </Group>
-      </Center>
+      {!markedAsRemoved && <div className={classes.imageOverlay}></div>}
+      {markedAsRemoved && <div className={classes.removeOverlay}></div>}
+      {markedAsRemoved && (
+        <Center
+          className={classes.removeOverlayContent}
+          onClick={onRemoveImage}
+        >
+          <Stack spacing={0} align="center">
+            <Text color="white">Marked to remove</Text>
+            <Text color="white">(Click to unmark)</Text>
+          </Stack>
+        </Center>
+      )}
+      {!markedAsRemoved && (
+        <Center
+          px={16}
+          className={classes.imageOverlayContent}
+          onClick={onRemoveImage}
+        >
+          <Group>
+            <IconCircleMinus color="white" />
+            <Text color="white">
+              {overlayMessage ?? 'Click here to remove the image'}
+            </Text>
+          </Group>
+        </Center>
+      )}
     </Box>
   );
 };
@@ -57,6 +84,18 @@ const useStyles = createStyles((theme, _, getRef) => {
       [`&:hover .${getRef('imageOverlayContent')}`]: {
         opacity: 1,
       },
+    },
+    removeOverlay: {
+      position: 'absolute',
+      width: '100%',
+      height: '100%',
+      backgroundColor: '#FF0000',
+      opacity: 0.4,
+    },
+    removeOverlayContent: {
+      position: 'absolute',
+      width: '100%',
+      height: '100%',
     },
     imageOverlay: {
       ref: getRef('imageOverlay'),
