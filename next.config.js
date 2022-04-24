@@ -5,7 +5,11 @@ const nextConfig = {
     outputStandalone: true,
   },
   images: {
-    domains: ['localhost', 'lh3.googleusercontent.com'],
+    domains: [
+      'localhost',
+      'lh3.googleusercontent.com',
+      'firebasestorage.googleapis.com',
+    ],
   },
 };
 
