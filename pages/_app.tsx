@@ -34,16 +34,16 @@ initAuth();
 function MyApp({ Component, pageProps }: AppPropsExtended) {
   /* --------------------------------- hooks -------------------------------- */
 
-  useEffect(() => {
-    // check stage
-    if (process.env.NODE_ENV != 'development') return;
-    // initialize firestore emulator
-    const db = getFirestore();
-    connectFirestoreEmulator(db, 'localhost', 8081);
-    // initialize storage emulator
-    const storage = getStorage();
-    connectStorageEmulator(storage, 'localhost', 9199);
-  }, []);
+  // useEffect(() => {
+  //   // check stage
+  //   if (process.env.NODE_ENV != 'development') return;
+  //   // initialize firestore emulator
+  //   const db = getFirestore();
+  //   connectFirestoreEmulator(db, 'localhost', 8081);
+  //   // initialize storage emulator
+  //   const storage = getStorage();
+  //   connectStorageEmulator(storage, 'localhost', 9199);
+  // }, []);
 
   /* ------------------------------ calculators ----------------------------- */
 
