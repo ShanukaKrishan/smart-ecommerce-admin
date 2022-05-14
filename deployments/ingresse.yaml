@@ -3,11 +3,20 @@ kind: Ingress
 metadata:
   name: admin
   namespace: smart
-  annotations:
-    kubernetes.io/ingress.class: "nginx"
 spec:
+  ingressClassName: nginx
   rules:
-    - host: smart-admin.lotusforthe.win
+    - host: smartwatchadmin.tk
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: admin-web
+                port:
+                  number: 3000
+    - host: www.smartwatchadmin.tk
       http:
         paths:
           - path: /

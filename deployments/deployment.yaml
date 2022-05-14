@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: admin-web
-          image: asia-southeast1-docker.pkg.dev/docme-317706/smart-ecommerce/admin-web:Production_0.0.7
+          image: asia-southeast1-docker.pkg.dev/docme-317706/smart-ecommerce/admin-web:Production_0.0.9
           resources:
             requests:
               memory: '512Mi'
@@ -23,3 +23,5 @@ spec:
             limits:
               memory: '512Mi'
               cpu: '250m'
+      imagePullSecrets:
+        - name: gcr-artifact-key

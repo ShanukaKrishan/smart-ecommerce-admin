@@ -42,9 +42,9 @@ const initAuth = (): void => {
     },
   };
   // check mode
-  if (process.env.NODE_ENV == 'development') {
-    initObject.firebaseAuthEmulatorHost = 'localhost:9099';
-  }
+  // if (process.env.NODE_ENV == 'development') {
+  //   initObject.firebaseAuthEmulatorHost = 'localhost:9099';
+  // }
   // init firebase
   init(initObject);
 };
