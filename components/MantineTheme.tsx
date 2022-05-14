@@ -73,6 +73,12 @@ const MantineTheme = ({ children }: Props): JSX.Element => {
             fontSize: theme.fontSizes.xs,
           },
         }),
+        Stepper: (theme) => ({
+          stepLabel: {
+            fontSize: theme.fontSizes.sm,
+            color: theme.colors.gray[7],
+          },
+        }),
       }}
     >
       <Global
