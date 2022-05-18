@@ -5,16 +5,20 @@ import {
   Button,
   Center,
   Checkbox,
+  Collapse,
   createStyles,
   Dialog,
   Group,
   Stack,
   Text,
+  TextInput,
 } from '@mantine/core';
+import { useDebouncedValue } from '@mantine/hooks';
 import {
   IconCheck,
   IconPencil,
   IconPlus,
+  IconSearch,
   IconTrash,
   IconX,
 } from '@tabler/icons';
@@ -25,6 +29,7 @@ import {
   getFirestore,
   onSnapshot,
   query,
+  where,
 } from 'firebase/firestore';
 import { deleteObject, getStorage, ref } from 'firebase/storage';
 import { NextPage } from 'next';
@@ -49,11 +54,23 @@ const Products: NextPage = () => {
 
   const [products, setProducts] = useState<Product[]>([]);
 
+  const [searchedProducts, setSearchedProducts] = useState<Product[]>([]);
+
   const [productsFetched, setProductsFetched] = useState(false);
+
+  const [searchedProductsFetched, setSearchedProductsFetched] = useState(true);
 
   const [selectedProduct, setSelectedProduct] = useState<Product>();
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+
+  const [searchVisible, setSearchVisible] = useState(false);
+
+  const [searchBoxVisible, setSearchBoxVisible] = useState(false);
+
+  const [searchText, setSearchText] = useState('');
+
+  const [debouncedSearchText] = useDebouncedValue(searchText, 500);
 
   const router = useRouter();
 
@@ -100,11 +117,110 @@ const Products: NextPage = () => {
     return () => unsubscribe();
   }, []);
 
+  useEffect(() => {
+    // check search text available
+    if (debouncedSearchText === '' || debouncedSearchText.length < 3) return;
+    // start loading
+    setSearchedProductsFetched(false);
+    // get firestore
+    const firestore = getFirestore();
+    // create reference with converter
+    const ref = collection(firestore, 'products').withConverter(
+      productConverter
+    );
+    // build query
+    const queryRef = query(ref, where('name', '==', debouncedSearchText));
+    // subscribe to data
+    const unsubscribe = onSnapshot(
+      queryRef,
+      async (snapshot) => {
+        // create array to store products
+        const products: Product[] = [];
+        // iterate through snapshot data
+        for (const doc of snapshot.docs) {
+          // get product
+          const product = doc.data();
+          // initialize product
+          await product.initialize();
+          // add product to array
+          products.push(product);
+        }
+        // save products
+        setSearchedProducts(products);
+        // set products fetched
+        setSearchedProductsFetched(true);
+      },
+      (error) => {
+        console.log(error);
+        // show notification
+        showErrorNotification('Error Occurred..');
+        // set products fetched
+        setSearchedProductsFetched(true);
+      }
+    );
+    // unsubscribe on page detached
+    return () => unsubscribe();
+  }, [debouncedSearchText]);
+
+  /* ------------------------------ calculators ----------------------------- */
+
+  const searched = debouncedSearchText.length > 2 && searchVisible;
+
+  const visibleProducts = searched ? searchedProducts : products;
+
+  const rows = (searched ? searchedProducts : products).map(
+    (element, index) => (
+      <tr key={index}>
+        <td>
+          <Avatar
+            src={element.images[0].url}
+            radius="xl"
+            imageProps={{ style: { objectFit: 'cover' } }}
+          />
+        </td>
+        <td style={{ whiteSpace: 'nowrap' }}>{element.name}</td>
+        <td style={{ minWidth: '250px' }}>{element.description}</td>
+        <td style={{ whiteSpace: 'nowrap' }}>LKR {element.price}</td>
+        <td style={{ whiteSpace: 'nowrap' }}>{element.brand}</td>
+        <td style={{ whiteSpace: 'nowrap' }}>{element.category}</td>
+        <td style={{ whiteSpace: 'nowrap' }}>
+          <Checkbox ml={20} checked={element.featured} onChange={() => {}} />
+        </td>
+        <td>
+          <Center>
+            <ActionIcon
+              variant="light"
+              color="accent"
+              radius="xl"
+              size="lg"
+              onClick={() => editProduct(index)}
+            >
+              <IconPencil />
+            </ActionIcon>
+          </Center>
+        </td>
+        <td>
+          <Center>
+            <ActionIcon
+              variant="light"
+              color="red"
+              radius="xl"
+              size="lg"
+              onClick={() => openDeleteDialog(index)}
+            >
+              <IconTrash />
+            </ActionIcon>
+          </Center>
+        </td>
+      </tr>
+    )
+  );
+
   /* ------------------------------- handlers ------------------------------- */
 
   const openDeleteDialog = (index: number) => {
     // set selected product
-    setSelectedProduct(products[index]);
+    setSelectedProduct(visibleProducts[index]);
     // open dialog
     setDeleteDialogOpen(true);
   };
@@ -146,60 +262,12 @@ const Products: NextPage = () => {
 
   const editProduct = (index: number) => {
     // get product
-    const product = products[index];
+    const product = visibleProducts[index];
     // set selected product
     setSelectedProduct(product);
     // go to edit screen
     router.push(`/products/${product.id}`);
   };
-
-  /* ------------------------------ calculators ----------------------------- */
-
-  const rows = products.map((element, index) => (
-    <tr key={index}>
-      <td>
-        <Avatar
-          src={element.images[0].url}
-          radius="xl"
-          imageProps={{ style: { objectFit: 'cover' } }}
-        />
-      </td>
-      <td style={{ whiteSpace: 'nowrap' }}>{element.name}</td>
-      <td style={{ minWidth: '250px' }}>{element.description}</td>
-      <td style={{ whiteSpace: 'nowrap' }}>LKR {element.price}</td>
-      <td style={{ whiteSpace: 'nowrap' }}>{element.brand}</td>
-      <td style={{ whiteSpace: 'nowrap' }}>{element.category}</td>
-      <td style={{ whiteSpace: 'nowrap' }}>
-        <Checkbox ml={20} checked={element.featured} onChange={() => {}} />
-      </td>
-      <td>
-        <Center>
-          <ActionIcon
-            variant="light"
-            color="accent"
-            radius="xl"
-            size="lg"
-            onClick={() => editProduct(index)}
-          >
-            <IconPencil />
-          </ActionIcon>
-        </Center>
-      </td>
-      <td>
-        <Center>
-          <ActionIcon
-            variant="light"
-            color="red"
-            radius="xl"
-            size="lg"
-            onClick={() => openDeleteDialog(index)}
-          >
-            <IconTrash />
-          </ActionIcon>
-        </Center>
-      </td>
-    </tr>
-  ));
 
   /* -------------------------------- render -------------------------------- */
 
@@ -214,11 +282,37 @@ const Products: NextPage = () => {
       <DataTable
         title="Products"
         loading={!productsFetched}
-        itemCount={products.length}
+        itemCount={visibleProducts.length}
         actions={
-          <Link href="/products/create" passHref>
-            <Button leftIcon={<IconPlus />}>New Product</Button>
-          </Link>
+          <Group>
+            {!searchVisible && !searchBoxVisible && (
+              <Link href="/products/create" passHref>
+                <Button leftIcon={<IconPlus />}>New Product</Button>
+              </Link>
+            )}
+            <Collapse
+              in={searchVisible}
+              onTransitionEnd={() => setSearchBoxVisible((visible) => !visible)}
+            >
+              <TextInput
+                placeholder="Product Name"
+                value={searchText}
+                onChange={(event) => setSearchText(event.currentTarget.value)}
+              />
+            </Collapse>
+            <Button
+              p={0}
+              px={8}
+              variant="subtle"
+              loading={!searchedProductsFetched}
+              onClick={() => {
+                setSearchVisible((visible) => !visible);
+              }}
+              // styles={{root:pad}}
+            >
+              <IconSearch />
+            </Button>
+          </Group>
         }
         headers={
           <tr>

@@ -1,14 +1,18 @@
 import {
   ActionIcon,
+  Button,
   Center,
+  Collapse,
   ColorSwatch,
   createStyles,
   Group,
   Select,
   Stack,
   Text,
+  TextInput,
 } from '@mantine/core';
-import { IconPencil } from '@tabler/icons';
+import { useDebouncedValue } from '@mantine/hooks';
+import { IconPencil, IconSearch } from '@tabler/icons';
 import {
   collection,
   getFirestore,
@@ -31,11 +35,23 @@ interface Props {}
 const Orders: NextPage = (props: Props) => {
   /* --------------------------------- hooks -------------------------------- */
 
-  const [orders, setORders] = useState<Order[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
+
+  const [searchedOrders, setSearchedOrders] = useState<Order[]>([]);
 
   const [ordersFetched, setOrdersFetched] = useState(false);
 
+  const [searchedOrdersFetched, setSearchedOrdersFetched] = useState(true);
+
   const [deliveryStatus, setDeliveryStatus] = useState<string | null>('');
+
+  const [searchVisible, setSearchVisible] = useState(false);
+
+  const [searchBoxVisible, setSearchBoxVisible] = useState(false);
+
+  const [searchText, setSearchText] = useState('');
+
+  const [debouncedSearchText] = useDebouncedValue(searchText, 500);
 
   const { classes } = useStyles();
 
@@ -70,7 +86,7 @@ const Orders: NextPage = (props: Props) => {
           orders.push(order);
         }
         // save orders
-        setORders(orders);
+        setOrders(orders);
         // set orders fetched
         setOrdersFetched(true);
       },
@@ -86,18 +102,56 @@ const Orders: NextPage = (props: Props) => {
     return () => unsubscribe();
   }, [deliveryStatus]);
 
-  /* ------------------------------- handlers ------------------------------- */
-
-  const editOrder = (index: number) => {
-    // get order
-    const order = orders[index];
-    // go to edit screen
-    router.push(`/orders/${order.id}`);
-  };
+  useEffect(() => {
+    // check search text available
+    if (debouncedSearchText === '' || debouncedSearchText.length < 3) return;
+    // start loading
+    setSearchedOrdersFetched(false);
+    // get firestore
+    const firestore = getFirestore();
+    // create reference with converter
+    const ref = collection(firestore, 'orders').withConverter(orderConverter);
+    // build query
+    const queryRef = query(ref, where('orderId', '==', debouncedSearchText));
+    // subscribe to data
+    const unsubscribe = onSnapshot(
+      queryRef,
+      async (snapshot) => {
+        // create array to store orders
+        const orders: Order[] = [];
+        // iterate through snapshot data
+        for (const doc of snapshot.docs) {
+          // get order
+          const order = doc.data();
+          // initialize order
+          await order.initialize();
+          // add order to array
+          orders.push(order);
+        }
+        // save orders
+        setSearchedOrders(orders);
+        // stop loading
+        setSearchedOrdersFetched(true);
+      },
+      (error) => {
+        console.log(error);
+        // show notification
+        showErrorNotification('Error occurred while searching..');
+        // stop loading
+        setSearchedOrdersFetched(true);
+      }
+    );
+    // unsubscribe on page detached
+    return () => unsubscribe();
+  }, [debouncedSearchText]);
 
   /* ------------------------------ calculators ----------------------------- */
 
-  const rows = orders.map((element, index) => (
+  const searched = debouncedSearchText.length > 2 && searchVisible;
+
+  const visibleOrders = searched ? searchedOrders : orders;
+
+  const rows = visibleOrders.map((element, index) => (
     <tr key={index}>
       <td style={{ whiteSpace: 'nowrap' }}>{element.orderId}</td>
       <td style={{ whiteSpace: 'nowrap' }}>
@@ -132,6 +186,15 @@ const Orders: NextPage = (props: Props) => {
     </tr>
   ));
 
+  /* ------------------------------- handlers ------------------------------- */
+
+  const editOrder = (index: number) => {
+    // get order
+    const order = visibleOrders[index];
+    // go to edit screen
+    router.push(`/orders/${order.id}`);
+  };
+
   /* -------------------------------- render -------------------------------- */
 
   return (
@@ -145,22 +208,46 @@ const Orders: NextPage = (props: Props) => {
       <DataTable
         title="Orders"
         loading={!ordersFetched}
-        itemCount={orders.length}
+        itemCount={visibleOrders.length}
         actions={
-          <Group>
-            <Select
-              placeholder="Filter by delivery status"
-              value={deliveryStatus}
-              onChange={setDeliveryStatus}
-              data={[
-                { value: 'Pending', label: 'Pending' },
-                { value: 'Processing', label: 'Processing' },
-                { value: 'Shipped', label: 'Shipped' },
-                { value: 'Delivered', label: 'Delivered' },
-                { value: 'Canceled', label: 'Canceled' },
-              ]}
-              clearable
-            />
+          <Group spacing={12}>
+            {!searchVisible && !searchBoxVisible && (
+              <Select
+                placeholder="Filter by delivery status"
+                value={deliveryStatus}
+                onChange={setDeliveryStatus}
+                data={[
+                  { value: 'Pending', label: 'Pending' },
+                  { value: 'Processing', label: 'Processing' },
+                  { value: 'Shipped', label: 'Shipped' },
+                  { value: 'Delivered', label: 'Delivered' },
+                  { value: 'Canceled', label: 'Canceled' },
+                ]}
+                clearable
+              />
+            )}
+            <Collapse
+              in={searchVisible}
+              onTransitionEnd={() => setSearchBoxVisible((visible) => !visible)}
+            >
+              <TextInput
+                placeholder="Order ID"
+                value={searchText}
+                onChange={(event) => setSearchText(event.currentTarget.value)}
+              />
+            </Collapse>
+            <Button
+              p={0}
+              px={8}
+              variant="subtle"
+              loading={!searchedOrdersFetched}
+              onClick={() => {
+                setSearchVisible((visible) => !visible);
+              }}
+              // styles={{root:pad}}
+            >
+              <IconSearch />
+            </Button>
           </Group>
         }
         headers={
