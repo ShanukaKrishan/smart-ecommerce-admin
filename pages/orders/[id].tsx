@@ -358,6 +358,7 @@ const EditOrder = (): JSX.Element => {
                   px={12}
                   active={deliveryStep}
                   breakpoint="lg"
+                  color="green"
                 >
                   <Stepper.Step
                     icon={<IconRotateClockwise2 />}
