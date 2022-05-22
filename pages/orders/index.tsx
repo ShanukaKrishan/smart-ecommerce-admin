@@ -151,41 +151,6 @@ const Orders: NextPage = (props: Props) => {
 
   const visibleOrders = searched ? searchedOrders : orders;
 
-  const rows = visibleOrders.map((element, index) => (
-    <tr key={index}>
-      <td style={{ whiteSpace: 'nowrap' }}>{element.orderId}</td>
-      <td style={{ whiteSpace: 'nowrap' }}>
-        Total {element.products.length} Items
-      </td>
-      <td style={{ whiteSpace: 'nowrap' }}>LKR {element.total}</td>
-      <td style={{ whiteSpace: 'nowrap' }}>
-        <Group align="center" spacing={12}>
-          <ColorSwatch
-            mb={2}
-            size={10}
-            color={deliveryStepColor(element.status)}
-          />
-          <Text size="sm">{element.status}</Text>
-        </Group>
-      </td>
-      <td style={{ whiteSpace: 'nowrap' }}>{element.user?.name}</td>
-      <td style={{ whiteSpace: 'nowrap' }}>{element.date}</td>
-      <td>
-        <Center>
-          <ActionIcon
-            variant="light"
-            color="accent"
-            radius="xl"
-            size="lg"
-            onClick={() => editOrder(index)}
-          >
-            <IconPencil />
-          </ActionIcon>
-        </Center>
-      </td>
-    </tr>
-  ));
-
   /* ------------------------------- handlers ------------------------------- */
 
   const editOrder = (index: number) => {
@@ -261,7 +226,7 @@ const Orders: NextPage = (props: Props) => {
             <th style={{ width: 50 }}></th>
           </tr>
         }
-        rows={rows}
+        rows={generateOrderRows(visibleOrders, editOrder)}
         emptyMessage={
           <Center style={{ width: '100%', height: '100%' }}>
             <Stack align="center" spacing={4}>
@@ -293,7 +258,46 @@ const useStyles = createStyles((theme) => {
 /*                                   helpers                                  */
 /* -------------------------------------------------------------------------- */
 
-const deliveryStepColor = (status: DeliveryStatus): string => {
+export const generateOrderRows = (
+  orders: Order[],
+  editOrder: (index: number) => void
+) =>
+  orders.map((element, index) => (
+    <tr key={index}>
+      <td style={{ whiteSpace: 'nowrap' }}>{element.orderId}</td>
+      <td style={{ whiteSpace: 'nowrap' }}>
+        Total {element.products.length} Items
+      </td>
+      <td style={{ whiteSpace: 'nowrap' }}>LKR {element.total}</td>
+      <td style={{ whiteSpace: 'nowrap' }}>
+        <Group align="center" spacing={12}>
+          <ColorSwatch
+            mb={2}
+            size={10}
+            color={deliveryStepColor(element.status)}
+          />
+          <Text size="sm">{element.status}</Text>
+        </Group>
+      </td>
+      <td style={{ whiteSpace: 'nowrap' }}>{element.user?.name}</td>
+      <td style={{ whiteSpace: 'nowrap' }}>{element.date}</td>
+      <td>
+        <Center>
+          <ActionIcon
+            variant="light"
+            color="accent"
+            radius="xl"
+            size="lg"
+            onClick={() => editOrder(index)}
+          >
+            <IconPencil />
+          </ActionIcon>
+        </Center>
+      </td>
+    </tr>
+  ));
+
+export const deliveryStepColor = (status: DeliveryStatus): string => {
   switch (status) {
     case DeliveryStatus.Pending:
       return 'gray';
