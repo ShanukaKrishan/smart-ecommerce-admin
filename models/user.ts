@@ -3,7 +3,6 @@ import { QueryDocumentSnapshot, SnapshotOptions } from 'firebase/firestore';
 export default class User {
   id: string;
   userName: string;
-  name: string;
   email: string;
   phoneNumber: string;
   imageUrl: string;
@@ -11,14 +10,12 @@ export default class User {
   constructor(
     id: string,
     userName: string,
-    name: string,
     email: string,
     phoneNumber: string,
     imageUrl: string
   ) {
     this.id = id;
     this.userName = userName;
-    this.name = name;
     this.email = email;
     this.phoneNumber = phoneNumber;
     this.imageUrl = imageUrl;
@@ -30,7 +27,6 @@ export default class User {
 export const userConverter = {
   toFirestore: (order: User) => ({
     username: order.userName,
-    name: order.name,
     email: order.email,
     phone: order.phoneNumber,
     userImageUrl: order.imageUrl,
@@ -43,7 +39,6 @@ export const userConverter = {
     return new User(
       snapshot.id,
       data.username,
-      data.name,
       data.email,
       data.phone,
       data.userImageUrl

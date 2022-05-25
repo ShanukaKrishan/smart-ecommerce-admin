@@ -1,12 +1,10 @@
 import {
   ActionIcon,
   Box,
+  Button,
   Center,
-  ColorSwatch,
   createStyles,
-  Divider,
   Group,
-  Loader,
   ScrollArea,
   Stack,
   Table,
@@ -15,33 +13,63 @@ import {
 import { Dropzone } from '@mantine/dropzone';
 import {
   IconBrandAndroid,
+  IconCloudOff,
+  IconCloudUpload,
   IconPencil,
   IconReportMoney,
   IconShoppingCart,
   IconSortAscending,
   IconTruckDelivery,
+  IconX,
 } from '@tabler/icons';
+import dayjs from 'dayjs';
 import {
   collection,
+  doc,
   getDocs,
   getFirestore,
   limit,
   query,
+  setDoc,
+  where,
 } from 'firebase/firestore';
+import {
+  deleteObject,
+  getDownloadURL,
+  getStorage,
+  listAll,
+  ref,
+  uploadBytes,
+} from 'firebase/storage';
 import type { NextPage } from 'next';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
-import AreaChartView from '../components/dashboard/AreaChart';
-import LineBarChart from '../components/dashboard/LineBarChart';
-import MixedBarChartView from '../components/dashboard/MixedBarChartView';
+import { useQuery } from 'react-query';
 import OverviewItem from '../components/dashboard/OverviewItem';
-import PieChartOne from '../components/dashboard/PieChartOne';
-import PieChartTwo from '../components/dashboard/PieChartTwo';
 import HomeLayout from '../components/HomeLayout';
-import { showErrorNotification } from '../helpers/notification';
+import LottieLoader from '../components/LottieLoader';
+import {
+  showErrorNotification,
+  showSuccessNotification,
+} from '../helpers/notification';
 import Order, { orderConverter } from '../models/order';
-import { deliveryStepColor } from './orders/index';
+import { productConverter } from '../models/product';
+import {
+  fetchUserEngagementDuration,
+  fetchTotalUsers,
+  fetchPageViews,
+  fetchUsersByCountry,
+} from '../services/analytics';
+import IsSameOrAfter from 'dayjs/plugin/isSameOrAfter';
+import Counter from '../components/Counter';
+import UserEngagementDurationChart from '../components/dashboard/UserEngagementDurationChart';
+import TotalUsersChart from '../components/dashboard/TotalUsersChart';
+import PageViewsChart from '../components/dashboard/PageViewsChart';
+import UserWorldMap from '../components/dashboard/UserWorldMap';
+import UserByCountryChart from '../components/dashboard/UserByCountryChart';
+
+dayjs.extend(IsSameOrAfter);
 
 /* -------------------------------------------------------------------------- */
 /*                                  component                                 */
@@ -54,9 +82,51 @@ const Home: NextPage = () => {
 
   const [ordersLoading, setOrdersLoading] = useState(false);
 
+  const [currentApk, setCurrentApk] = useState<{
+    name: string;
+    fullPath: string;
+  }>();
+
+  const [apk, setApk] = useState<File>();
+
+  const [currentApkLoading, setCurrentApkLoading] = useState(false);
+
+  const [apkUploadLoading, setApkUploadLoading] = useState(false);
+
+  const [apkRemoveLoading, setApkRemoveLoading] = useState(false);
+
+  const [totalOrders, setTotalOrders] = useState<number>();
+
+  const [totalRevenue, setTotalRevenue] = useState<number>();
+
+  const [totalProducts, setTotalProducts] = useState<number>();
+
+  const [newOrders, setNewOrders] = useState<number>();
+
   const router = useRouter();
 
   const { classes } = useStyles();
+
+  const {
+    data: userEngagementDurationData,
+    isLoading: userEngagementDurationLoading,
+  } = useQuery(
+    'user-engagement-duration-analytics',
+    fetchUserEngagementDuration
+  );
+
+  const { data: totalUsersData, isLoading: totalUsersLoading } = useQuery(
+    'total-users-analytics',
+    fetchTotalUsers
+  );
+
+  const { data: pageViewsData, isLoading: pageViewsLoading } = useQuery(
+    'page-views-analytics',
+    fetchPageViews
+  );
+
+  const { data: usersByCountryData, isLoading: usersByCountryLoading } =
+    useQuery('users-by-country-analytics', fetchUsersByCountry);
 
   useEffect(() => {
     const getOrders = async () => {
@@ -65,7 +135,11 @@ const Home: NextPage = () => {
       // create reference with converter
       const ref = collection(firestore, 'orders').withConverter(orderConverter);
       // create query
-      const queryRef = query(ref, limit(10));
+      const queryRef = query(
+        ref,
+        where('orderStatus', '==', 'Pending'),
+        limit(10)
+      );
       // get snapshot
       const snapshot = await getDocs(queryRef);
       // create array to hold orders
@@ -100,6 +174,103 @@ const Home: NextPage = () => {
     })();
   }, []);
 
+  useEffect(() => {
+    const getOrderSummary = async () => {
+      // get firestore
+      const firestore = getFirestore();
+      // create reference with converter
+      const ref = collection(firestore, 'orders').withConverter(orderConverter);
+      // create query
+      const queryRef = query(ref);
+      // get snapshot
+      const snapshot = await getDocs(queryRef);
+      // save count
+      setTotalOrders(snapshot.size);
+      // start revenue with zero
+      setTotalRevenue(0);
+      // start new orders with zero
+      setNewOrders(0);
+      // calculate revenue
+      for (const doc of snapshot.docs) {
+        // get order
+        const order = doc.data();
+        // increase revenue
+        setTotalRevenue(
+          (currentRevenue) => currentRevenue! + Number(order.total)
+        );
+        // check order is placed after today
+        if (dayjs(order.date).isSameOrAfter(Date.now(), 'day')) {
+          // increment new orders count
+          setNewOrders((count) => count! + 1);
+        }
+      }
+    };
+
+    const getProductSummary = async () => {
+      // get firestore
+      const firestore = getFirestore();
+      // create reference with converter
+      const ref = collection(firestore, 'products').withConverter(
+        productConverter
+      );
+      // create query
+      const queryRef = query(ref);
+      // get snapshot
+      const snapshot = await getDocs(queryRef);
+      // save count
+      setTotalProducts(snapshot.size);
+    };
+
+    (async function () {
+      try {
+        // get user
+        await getOrderSummary();
+      } catch (error) {
+        console.log(error);
+      }
+    })();
+    (async function () {
+      try {
+        // get user
+        await getProductSummary();
+      } catch (error) {
+        console.log(error);
+      }
+    })();
+  }, []);
+
+  useEffect(() => {
+    const getCurrentApk = async () => {
+      const storage = getStorage();
+      // create listing ref
+      const listRef = ref(storage, 'package');
+      // list current packages
+      const list = await listAll(listRef);
+      // get first package
+      const apk = list.items[0];
+      // check apk exist
+      if (!apk) return;
+      // save apk details
+      setCurrentApk({ name: apk.name, fullPath: apk.fullPath });
+    };
+
+    (async function () {
+      try {
+        // start loading
+        setCurrentApkLoading(true);
+        // get apk
+        await getCurrentApk();
+      } catch (error) {
+        console.log(error);
+        // show notification
+        showErrorNotification('Error Occurred');
+      } finally {
+        // stop loading
+        setCurrentApkLoading(false);
+      }
+    })();
+  }, []);
+
   /* ------------------------------- handlers ------------------------------- */
 
   const editOrder = (index: number) => {
@@ -109,6 +280,73 @@ const Home: NextPage = () => {
     router.push(`/orders/${order.id}`);
   };
 
+  const updatePackageLink = async (link: string) => {
+    // get firestore
+    const firestore = getFirestore();
+    // create reference with converter
+    const ref = doc(firestore, 'package', 'package');
+    // add document to the database
+    await setDoc(ref, { link });
+  };
+
+  const uploadApk = async (): Promise<void> => {
+    try {
+      // check apk is empty
+      if (!apk) return;
+      // start loading
+      setApkUploadLoading(true);
+      // get storage
+      const storage = getStorage();
+      // create reference
+      const apkRef = ref(storage, `package/${apk.name}`);
+      // upload file
+      await uploadBytes(apkRef, apk);
+      // get download url
+      const downloadUrl = await getDownloadURL(apkRef);
+      // update package document
+      await updatePackageLink(downloadUrl);
+      // show success notification
+      showSuccessNotification('Successfully uploaded package');
+      // remove selected apk
+      setApk(undefined);
+      // set current apk
+      setCurrentApk({ name: apkRef.name, fullPath: apkRef.fullPath });
+    } catch (error) {
+      console.log(error);
+      showErrorNotification('Error Occurred..');
+    } finally {
+      // stop loading
+      setApkUploadLoading(false);
+    }
+  };
+
+  const removeApk = async (): Promise<void> => {
+    try {
+      // check apk is empty
+      if (!currentApk) return;
+      // start loading
+      setApkRemoveLoading(true);
+      // get storage
+      const storage = getStorage();
+      // create reference
+      const apkRef = ref(storage, currentApk.fullPath);
+      // remove file
+      await deleteObject(apkRef);
+      // update package document
+      await updatePackageLink('');
+      // show success notification
+      showSuccessNotification('Successfully removed package');
+      // remove current apk
+      setCurrentApk(undefined);
+    } catch (error) {
+      console.log(error);
+      showErrorNotification('Error Occurred..');
+    } finally {
+      // stop loading
+      setApkRemoveLoading(false);
+    }
+  };
+
   /* -------------------------------- helpers ------------------------------- */
 
   const orderItems = orders.map((element, index) => (
@@ -116,7 +354,7 @@ const Home: NextPage = () => {
       <td style={{ whiteSpace: 'nowrap' }}>{element.orderId}</td>
       {/* <td style={{ whiteSpace: 'nowrap' }}>{element.products.length}</td> */}
       {/* <td style={{ whiteSpace: 'nowrap' }}>LKR {element.total}</td> */}
-      <td style={{ whiteSpace: 'nowrap' }}>
+      {/* <td style={{ whiteSpace: 'nowrap' }}>
         <Group align="center" spacing={12}>
           <ColorSwatch
             mb={2}
@@ -125,7 +363,8 @@ const Home: NextPage = () => {
           />
           <Text size="sm">{element.status}</Text>
         </Group>
-      </td>
+      </td> */}
+      <td style={{ whiteSpace: 'nowrap' }}>{element.user?.userName}</td>
       <td>
         <Center>
           <ActionIcon
@@ -143,13 +382,13 @@ const Home: NextPage = () => {
   ));
 
   const orderTable = (
-    <Stack py={12} px={8} className={classes.ordersCard}>
+    <Stack py={12} px={8} className={classes.ordersCard} spacing={0}>
       <Text align="center" color="gray" weight={500}>
         Latest Orders
       </Text>
       {ordersLoading && (
         <Center style={{ width: '100%', height: '100%' }}>
-          <Loader />
+          <LottieLoader />
         </Center>
       )}
       {!ordersLoading && orders.length > 0 && (
@@ -162,7 +401,8 @@ const Home: NextPage = () => {
             <thead>
               <tr>
                 <th>ID</th>
-                <th>Status</th>
+                <th>Ordered By</th>
+                {/* <th>Status</th> */}
                 <th style={{ width: 50 }}></th>
               </tr>
             </thead>
@@ -173,27 +413,95 @@ const Home: NextPage = () => {
     </Stack>
   );
 
+  const androidApkUploadView = apk ? (
+    <Stack align="stretch" spacing={20}>
+      <Group position="center" spacing={4}>
+        <Text size="xs" weight={500} color="gray">
+          Selected:
+        </Text>
+        <Text size="xs" weight={500}>
+          {apk.name}
+        </Text>
+        <Text size="xs" weight={500} color="gray">
+          ({(apk.size / (1024 * 1024)).toFixed(2)} Mb)
+        </Text>
+      </Group>
+      <Group>
+        <Button
+          loading={apkUploadLoading}
+          leftIcon={<IconCloudUpload />}
+          style={{ flexGrow: 1 }}
+          onClick={uploadApk}
+        >
+          Upload
+        </Button>
+        <Button
+          variant="outline"
+          leftIcon={<IconX />}
+          onClick={() => setApk(undefined)}
+        >
+          Cancel
+        </Button>
+      </Group>
+    </Stack>
+  ) : (
+    <Dropzone
+      multiple={false}
+      onDrop={(files) => {
+        setApk(files[0]);
+      }}
+      onReject={(rejections) => {
+        console.log(rejections);
+      }}
+      maxSize={5 * 1024 ** 2}
+    >
+      {(status) => (
+        <Stack align="center" spacing={8}>
+          <IconBrandAndroid size={60} color="gray" />
+          <Text size="xs" color="gray" align="center">
+            Drop package here or click to upload
+          </Text>
+        </Stack>
+      )}
+    </Dropzone>
+  );
+
+  const androidCurrentApk = (
+    <Stack align="stretch" spacing={20}>
+      <Group position="center" spacing={4}>
+        <Text size="xs" weight={500} color="gray">
+          Current:
+        </Text>
+        <Text size="xs" weight={500}>
+          {currentApk?.name}
+        </Text>
+      </Group>
+      <Group>
+        <Button
+          variant="outline"
+          loading={apkRemoveLoading}
+          leftIcon={<IconCloudOff />}
+          style={{ flexGrow: 1 }}
+          onClick={removeApk}
+        >
+          Remove
+        </Button>
+      </Group>
+    </Stack>
+  );
+
   const androidApkUploader = (
-    <Stack align="center" p={20} className={classes.apkCard}>
-      <Text weight={500}>Android APK</Text>
-      <Dropzone
-        onDrop={(files) => {
-          // form.setFieldValue('images', [...form.values.images, ...files]);
-        }}
-        onReject={(rejections) => {
-          console.log(rejections);
-        }}
-        maxSize={5 * 1024 ** 2}
-      >
-        {(status) => (
-          <Stack align="center" spacing={8}>
-            <IconBrandAndroid size={60} color="gray" />
-            <Text size="xs" color="gray">
-              Drop apk here or click to upload
-            </Text>
-          </Stack>
-        )}
-      </Dropzone>
+    <Stack align="stretch" p={20} className={classes.apkCard}>
+      <Text align="center" weight={500}>
+        AR Package
+      </Text>
+      {currentApkLoading ? (
+        <LottieLoader />
+      ) : currentApk ? (
+        androidCurrentApk
+      ) : (
+        androidApkUploadView
+      )}
     </Stack>
   );
 
@@ -212,26 +520,41 @@ const Home: NextPage = () => {
           <OverviewItem
             icon={<IconTruckDelivery />}
             title="Total Orders"
-            value="50"
+            value={totalOrders != null ? <Counter count={totalOrders} /> : '_'}
+            href="/orders"
           />
           <OverviewItem
             icon={<IconReportMoney />}
             title="Total Revenue"
-            value="LKR 24000"
+            value={
+              totalRevenue != null ? (
+                <Group spacing={4}>
+                  <Text weight={500}>LKR</Text>
+                  <Counter count={totalRevenue} />
+                </Group>
+              ) : (
+                '_'
+              )
+            }
+            href="/orders"
           />
           <OverviewItem
             icon={<IconShoppingCart />}
             title="Total Products"
-            value="70"
+            value={
+              totalProducts != null ? <Counter count={totalProducts} /> : '_'
+            }
+            href="/products"
           />
           <OverviewItem
             icon={<IconSortAscending />}
             title="New Orders"
-            value="4"
+            value={newOrders != null ? <Counter count={newOrders} /> : '_'}
+            href="/orders"
           />
         </Group>
         <Group
-          px={44}
+          pr={44}
           spacing={20}
           align="stretch"
           style={{
@@ -241,19 +564,53 @@ const Home: NextPage = () => {
             overflow: 'hidden',
           }}
         >
-          <ScrollArea style={{ width: '70%', flex: 'none' }}>
-            <Stack>
-              <Group grow>
-                <Box style={{ height: 250 }}>
-                  <PieChartOne />
-                </Box>
-                <Box style={{ height: 250 }}>
-                  <PieChartTwo />
-                </Box>
-              </Group>
-              <AreaChartView />
-              <MixedBarChartView />
-              <LineBarChart />
+          <ScrollArea
+            style={{ width: '70%', flex: 'none', overflowX: 'hidden' }}
+          >
+            <Stack mr={16} spacing={40}>
+              <Stack align="center" style={{ height: 300 }} spacing={0}>
+                <PageViewsChart
+                  loading={pageViewsLoading}
+                  data={pageViewsData ?? []}
+                />
+                <Text size="sm" color="gray" weight={500}>
+                  Page Views
+                </Text>
+              </Stack>
+              <Stack align="center" style={{ height: 300 }} spacing={0}>
+                <UserEngagementDurationChart
+                  loading={userEngagementDurationLoading}
+                  data={userEngagementDurationData ?? []}
+                />
+                <Text size="sm" color="gray" weight={500}>
+                  User Engagement Duration
+                </Text>
+              </Stack>
+              <Stack align="center" style={{ height: 300 }} spacing={0}>
+                <TotalUsersChart
+                  loading={totalUsersLoading}
+                  data={totalUsersData ?? []}
+                />
+                <Text size="sm" color="gray" weight={500}>
+                  Total Users
+                </Text>
+              </Stack>
+              <Stack align="center" style={{ height: 500 }} spacing={0}>
+                <Group style={{ height: '100%', width: '100%' }}>
+                  <Box style={{ height: '100%', width: '70%' }}>
+                    <UserWorldMap data={usersByCountryData ?? []} />
+                  </Box>
+                  <Box style={{ height: '100%', width: '30%' }}>
+                    <UserByCountryChart
+                      loading={usersByCountryLoading}
+                      data={usersByCountryData ?? []}
+                    />
+                  </Box>
+                </Group>
+                <Text mt={-20} size="sm" color="gray" weight={500}>
+                  Users By Countries
+                </Text>
+              </Stack>
             </Stack>
           </ScrollArea>
           <Stack style={{ width: '30%' }} spacing={20}>

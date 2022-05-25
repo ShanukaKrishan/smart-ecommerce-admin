@@ -5,9 +5,10 @@ import { NextComponentType, NextPageContext } from 'next';
 import { Provider } from 'react-redux';
 import MantineTheme from '../components/MantineTheme';
 import store from '../redux/store';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore';
 import { connectStorageEmulator, getStorage } from 'firebase/storage';
+import { QueryClient, QueryClientProvider } from 'react-query';
 
 /* -------------------------------------------------------------------------- */
 /*                                 interfaces                                 */
@@ -47,18 +48,23 @@ function MyApp({ Component, pageProps }: AppPropsExtended) {
 
   /* ------------------------------ calculators ----------------------------- */
 
+  // react query client
+  const [queryClient] = useState(() => new QueryClient());
+
   const Layout = Component.Layout ?? Noop;
 
   /* -------------------------------- render -------------------------------- */
 
   return (
-    <Provider store={store}>
-      <MantineTheme>
-        <Layout>
-          <Component {...pageProps} />
-        </Layout>
-      </MantineTheme>
-    </Provider>
+    <QueryClientProvider client={queryClient}>
+      <Provider store={store}>
+        <MantineTheme>
+          <Layout>
+            <Component {...pageProps} />
+          </Layout>
+        </MantineTheme>
+      </Provider>
+    </QueryClientProvider>
   );
 }
 

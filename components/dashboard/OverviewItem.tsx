@@ -1,5 +1,13 @@
-import { createStyles, Divider, Group, Stack, Text } from '@mantine/core';
+import {
+  Anchor,
+  createStyles,
+  Divider,
+  Group,
+  Stack,
+  Text,
+} from '@mantine/core';
 import { IconChevronRight, IconTruckDelivery } from '@tabler/icons';
+import Link from 'next/link';
 import React, { ReactNode } from 'react';
 
 /* -------------------------------------------------------------------------- */
@@ -9,14 +17,15 @@ import React, { ReactNode } from 'react';
 interface Props {
   icon: ReactNode;
   title: string;
-  value: string;
+  value: ReactNode;
+  href: string;
 }
 
 /* -------------------------------------------------------------------------- */
 /*                                  component                                 */
 /* -------------------------------------------------------------------------- */
 
-const OverviewItem = ({ icon, title, value }: Props): JSX.Element => {
+const OverviewItem = ({ icon, title, value, href }: Props): JSX.Element => {
   /* --------------------------------- hooks -------------------------------- */
 
   const { classes } = useStyles();
@@ -31,14 +40,18 @@ const OverviewItem = ({ icon, title, value }: Props): JSX.Element => {
           <Text size="xs" color="gray">
             {title}
           </Text>
-          <Text weight={500}>{value}</Text>
+          {value}
         </Stack>
       </Group>
       <Divider />
       <Group px={8} mt={4} spacing={4}>
-        <Text size="xs" color="gray">
-          View All
-        </Text>
+        <Link href={href} passHref>
+          <Anchor>
+            <Text size="xs" color="gray">
+              View All
+            </Text>
+          </Anchor>
+        </Link>
         <IconChevronRight size={12} color="gray" />
       </Group>
     </Stack>
