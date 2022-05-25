@@ -29,6 +29,7 @@ import ImageDropzone from '../../components/ImageDropzone';
 import { deleteObject, getStorage, ref, uploadBytes } from 'firebase/storage';
 import { getExtension } from '../../helpers/string';
 import Head from 'next/head';
+import LottieLoader from '../../components/LottieLoader';
 
 /* -------------------------------------------------------------------------- */
 /*                                 interfaces                                 */
@@ -227,7 +228,7 @@ const EditCategory = (): JSX.Element => {
         </MediaQuery>
       </Group>
       <Center className={classes.formWrapper}>
-        {loading && <Loader />}
+        {loading && <LottieLoader />}
         {!loading && (
           <form
             id="update-category-form"

@@ -11,6 +11,7 @@ import {
   Text,
 } from '@mantine/core';
 import React, { ReactNode } from 'react';
+import LottieLoader from './LottieLoader';
 
 /* -------------------------------------------------------------------------- */
 /*                                 interfaces                                 */
@@ -56,7 +57,8 @@ const DataTable = ({
       <Divider mx={30} />
       {loading && (
         <Center className={classes.tableWrapper}>
-          <Loader />
+          {/* <Loader /> */}
+          <LottieLoader />
         </Center>
       )}
       {!loading && itemCount === 0 && emptyMessage}

@@ -88,7 +88,6 @@ const Users: NextPage = () => {
         />
       </td>
       <td style={{ whiteSpace: 'nowrap' }}>{element.userName}</td>
-      <td style={{ whiteSpace: 'nowrap' }}>{element.name}</td>
       <td style={{ whiteSpace: 'nowrap' }}>{element.email}</td>
       <td style={{ whiteSpace: 'nowrap' }}>{element.phoneNumber}</td>
       <td>
@@ -126,7 +125,6 @@ const Users: NextPage = () => {
           <tr>
             <th style={{ width: 80 }}></th>
             <th>User Name</th>
-            <th>Name</th>
             <th>Email</th>
             <th>Phone Number</th>
             <th style={{ width: 50 }}></th>

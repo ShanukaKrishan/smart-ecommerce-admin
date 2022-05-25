@@ -279,7 +279,7 @@ export const generateOrderRows = (
           <Text size="sm">{element.status}</Text>
         </Group>
       </td>
-      <td style={{ whiteSpace: 'nowrap' }}>{element.user?.name}</td>
+      <td style={{ whiteSpace: 'nowrap' }}>{element.user?.userName}</td>
       <td style={{ whiteSpace: 'nowrap' }}>{element.date}</td>
       <td>
         <Center>

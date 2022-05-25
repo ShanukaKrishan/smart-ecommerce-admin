@@ -8,7 +8,6 @@ import {
   createStyles,
   Divider,
   Group,
-  Loader,
   MediaQuery,
   Stack,
   Text,
@@ -28,6 +27,7 @@ import { useRouter } from 'next/router';
 import React, { useEffect, useState } from 'react';
 import DataTable from '../../components/DataTable';
 import HomeLayout from '../../components/HomeLayout';
+import LottieLoader from '../../components/LottieLoader';
 import { showErrorNotification } from '../../helpers/notification';
 import Order, { orderConverter } from '../../models/order';
 import Product, { productConverter } from '../../models/product';
@@ -254,12 +254,9 @@ const UserDetails = (props: Props): JSX.Element => {
         />
         <Stack spacing={0}>
           <Text size="lg" weight={500}>
-            {user?.name}
+            {user?.userName}
           </Text>
           <Stack spacing={0}>
-            <Text size="xs" color="gray">
-              {user?.userName}
-            </Text>
             <Text size="xs" color="gray">
               {user?.email}
             </Text>
@@ -342,13 +339,13 @@ const UserDetails = (props: Props): JSX.Element => {
     <Stack className={classes.body} spacing={0}>
       {/* head */}
       <Head>
-        <title>Smart Ecommerce Store Admin - User ({user?.name})</title>
+        <title>Smart Ecommerce Store Admin - User ({user?.userName})</title>
         <link rel="icon" href="/favicon.ico" />
       </Head>
       {/* body */}
       {loading && (
         <Center style={{ height: '100%', width: '100%' }}>
-          <Loader />
+          <LottieLoader />
         </Center>
       )}
       {!loading && (

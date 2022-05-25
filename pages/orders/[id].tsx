@@ -5,8 +5,6 @@ import {
   createStyles,
   Divider,
   Group,
-  Loader,
-  MediaQuery,
   ScrollArea,
   Stack,
   Stepper,
@@ -14,7 +12,6 @@ import {
 } from '@mantine/core';
 import {
   IconAnchor,
-  IconArrowBigUpLine,
   IconArrowBigUpLines,
   IconCheck,
   IconRotateClockwise2,
@@ -29,7 +26,6 @@ import {
   getFirestore,
   doc,
   updateDoc,
-  getDoc,
   onSnapshot,
   Unsubscribe,
 } from 'firebase/firestore';
@@ -42,6 +38,7 @@ import Head from 'next/head';
 import Order, { DeliveryStatus, orderConverter } from '../../models/order';
 import ProductItem from '../../components/order/ProductItem';
 import User, { userConverter } from '../../models/user';
+import LottieLoader from '../../components/LottieLoader';
 
 /* -------------------------------------------------------------------------- */
 /*                                 interfaces                                 */
@@ -296,7 +293,7 @@ const EditOrder = (): JSX.Element => {
       {/* body */}
       {loading ? (
         <Center style={{ height: '100%', width: '100%' }}>
-          <Loader />
+          <LottieLoader />
         </Center>
       ) : (
         <ScrollArea>
@@ -391,8 +388,9 @@ const EditOrder = (): JSX.Element => {
                     align="center"
                     justify="center"
                     style={{ height: 300 }}
+                    spacing={0}
                   >
-                    <Loader />
+                    <LottieLoader />
                     <Text size="xs" color="gray">
                       Loading products..
                     </Text>
@@ -407,7 +405,7 @@ const EditOrder = (): JSX.Element => {
                     justify="center"
                     style={{ height: 150 }}
                   >
-                    <Loader />
+                    <LottieLoader />
                     <Text size="xs" color="gray">
                       Loading user..
                     </Text>
@@ -420,7 +418,7 @@ const EditOrder = (): JSX.Element => {
                           Ordered by
                         </Text>
                         <Text size="xs" color="gray">
-                          {user?.name}
+                          {user?.userName}
                         </Text>
                         <Text size="xs" color="gray">
                           {user?.email}

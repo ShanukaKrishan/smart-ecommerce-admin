@@ -7,7 +7,6 @@ import {
   createStyles,
   Divider,
   Group,
-  Loader,
   MediaQuery,
   NumberInput,
   Select,
@@ -46,6 +45,7 @@ import FormCategoryLabel from '../../components/form/FormCategoryLabel';
 import Brand, { brandConverter } from '../../models/brand';
 import Head from 'next/head';
 import { v4 as uuid } from 'uuid';
+import LottieLoader from '../../components/LottieLoader';
 
 /* -------------------------------------------------------------------------- */
 /*                                 interfaces                                 */
@@ -329,7 +329,7 @@ const CreateProduct = (): JSX.Element => {
         </MediaQuery>
       </Group>
       <Center className={classes.formWrapper}>
-        {loading && <Loader />}
+        {loading && <LottieLoader />}
         {!loading && (
           <form
             id="create-product-form"

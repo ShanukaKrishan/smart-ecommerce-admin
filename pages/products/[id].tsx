@@ -46,6 +46,7 @@ import FormCategory from '../../components/form/FormCategory';
 import FormCategoryLabel from '../../components/form/FormCategoryLabel';
 import Brand, { brandConverter } from '../../models/brand';
 import Head from 'next/head';
+import LottieLoader from '../../components/LottieLoader';
 
 /* -------------------------------------------------------------------------- */
 /*                                 interfaces                                 */
@@ -411,7 +412,7 @@ const CreateProduct = (): JSX.Element => {
         </MediaQuery>
       </Group>
       <Center className={classes.formWrapper}>
-        {loading && <Loader />}
+        {loading && <LottieLoader />}
         {!loading && (
           <form
             id="create-product-form"
