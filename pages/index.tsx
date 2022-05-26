@@ -5,6 +5,7 @@ import {
   Center,
   createStyles,
   Group,
+  MediaQuery,
   ScrollArea,
   Stack,
   Table,
@@ -60,6 +61,7 @@ import {
   fetchTotalUsers,
   fetchPageViews,
   fetchUsersByCountry,
+  fetchUsersByPlatform,
 } from '../services/analytics';
 import IsSameOrAfter from 'dayjs/plugin/isSameOrAfter';
 import Counter from '../components/Counter';
@@ -68,6 +70,10 @@ import TotalUsersChart from '../components/dashboard/TotalUsersChart';
 import PageViewsChart from '../components/dashboard/PageViewsChart';
 import UserWorldMap from '../components/dashboard/UserWorldMap';
 import UserByCountryChart from '../components/dashboard/UserByCountryChart';
+import UserByPlatformChart from '../components/dashboard/UserByPlatformChart';
+import RevenuePerDayChart, {
+  RevenuePerDayData,
+} from '../components/dashboard/RevenuePerDayChart';
 
 dayjs.extend(IsSameOrAfter);
 
@@ -103,6 +109,10 @@ const Home: NextPage = () => {
 
   const [newOrders, setNewOrders] = useState<number>();
 
+  const [revenuePerDayData, setRevenuePerDayData] = useState<
+    RevenuePerDayData[]
+  >([]);
+
   const router = useRouter();
 
   const { classes } = useStyles();
@@ -127,6 +137,9 @@ const Home: NextPage = () => {
 
   const { data: usersByCountryData, isLoading: usersByCountryLoading } =
     useQuery('users-by-country-analytics', fetchUsersByCountry);
+
+  const { data: usersByPlatformData, isLoading: usersByPlatformLoading } =
+    useQuery('users-by-platform-analytics', fetchUsersByPlatform);
 
   useEffect(() => {
     const getOrders = async () => {
@@ -155,14 +168,45 @@ const Home: NextPage = () => {
       }
       // save orders
       setOrders(orders);
+      // return orders
+      return orders;
+    };
+
+    const calculateRevenuePerDay = (orders: Order[]) => {
+      // create data
+      const data: RevenuePerDayData[] = [];
+      // iterate through days
+      for (
+        let day = dayjs().subtract(2, 'week');
+        day.isBefore(Date.now());
+        day = day.add(1, 'day')
+      ) {
+        // add to data
+        data.push({ name: day.format('D MMM'), date: day.toDate(), value: 0 });
+      }
+      // iterate through orders
+      for (const order of orders) {
+        // get index of data array
+        const index = data.findIndex((data) =>
+          dayjs(data.date).isSame(dayjs(order.date), 'day')
+        );
+        // check index exist
+        if (index === -1) continue;
+        // increase value
+        data[index].value += order.total;
+      }
+      // save data
+      setRevenuePerDayData(data);
     };
 
     (async function () {
       try {
         // start loading
         setOrdersLoading(true);
-        // get user
-        await getOrders();
+        // get orders
+        const orders = await getOrders();
+        // create revenue data
+        calculateRevenuePerDay(orders);
       } catch (error) {
         console.log(error);
         // show notification
@@ -505,6 +549,179 @@ const Home: NextPage = () => {
     </Stack>
   );
 
+  const overviewItems = (
+    <Group className={classes.overviewWrapper} px={44} spacing={40}>
+      <Group className={classes.overViewRow} spacing={40}>
+        <OverviewItem
+          icon={<IconTruckDelivery />}
+          title="Total Orders"
+          value={totalOrders != null ? <Counter count={totalOrders} /> : '_'}
+          href="/orders"
+        />
+        <OverviewItem
+          icon={<IconReportMoney />}
+          title="Total Revenue"
+          value={
+            totalRevenue != null ? (
+              <Group spacing={4}>
+                <Text weight={500}>LKR</Text>
+                <Counter count={totalRevenue} />
+              </Group>
+            ) : (
+              '_'
+            )
+          }
+          href="/orders"
+        />
+      </Group>
+      <Group className={classes.overViewRow} spacing={40}>
+        <OverviewItem
+          icon={<IconShoppingCart />}
+          title="Total Products"
+          value={
+            totalProducts != null ? <Counter count={totalProducts} /> : '_'
+          }
+          href="/products"
+        />
+        <OverviewItem
+          icon={<IconSortAscending />}
+          title="New Orders"
+          value={newOrders != null ? <Counter count={newOrders} /> : '_'}
+          href="/orders"
+        />
+      </Group>
+    </Group>
+  );
+
+  const pageViewsChart = (
+    <Stack className={classes.analyticsRow1Chart} align="center" spacing={0}>
+      <PageViewsChart loading={pageViewsLoading} data={pageViewsData ?? []} />
+      <Text size="sm" color="gray" weight={500}>
+        Page Views
+      </Text>
+    </Stack>
+  );
+
+  const userPlatformChart = (
+    <Stack className={classes.analyticsRow1Chart} align="center" spacing={0}>
+      <UserByPlatformChart
+        loading={usersByPlatformLoading}
+        data={usersByPlatformData ?? []}
+      />
+      <Text size="sm" color="gray" weight={500}>
+        User Platform
+      </Text>
+    </Stack>
+  );
+
+  const userEngagementDurationChart = (
+    <Stack align="center" style={{ height: 300 }} spacing={0}>
+      <UserEngagementDurationChart
+        loading={userEngagementDurationLoading}
+        data={userEngagementDurationData ?? []}
+      />
+      <Text size="sm" color="gray" weight={500}>
+        User Engagement Duration
+      </Text>
+    </Stack>
+  );
+
+  const totalUsersChart = (
+    <Stack align="center" style={{ height: 300 }} spacing={0}>
+      <TotalUsersChart
+        loading={totalUsersLoading}
+        data={totalUsersData ?? []}
+      />
+      <Text size="sm" color="gray" weight={500}>
+        Total Users
+      </Text>
+    </Stack>
+  );
+
+  const revenuePerDayChart = (
+    <Stack align="center" style={{ height: 300 }} spacing={0}>
+      <RevenuePerDayChart
+        loading={ordersLoading}
+        data={revenuePerDayData ?? []}
+      />
+      <Text size="sm" color="gray" weight={500}>
+        Revenue
+      </Text>
+    </Stack>
+  );
+
+  const usersByCountryCharts = (
+    <Group className={classes.userByCountryCharts}>
+      <Box className={classes.userWorldMap}>
+        <UserWorldMap data={usersByCountryData ?? []} />
+      </Box>
+      <Box className={classes.userByCountryChart}>
+        <UserByCountryChart
+          loading={usersByCountryLoading}
+          data={usersByCountryData ?? []}
+        />
+      </Box>
+    </Group>
+  );
+
+  const analytics = (
+    <Stack className={classes.analyticsWrapper} mr={16} spacing={40}>
+      <Group className={classes.analyticsRow1}>
+        {pageViewsChart}
+        {userPlatformChart}
+      </Group>
+      {userEngagementDurationChart}
+      {totalUsersChart}
+      {revenuePerDayChart}
+      <Stack
+        align="center"
+        className={classes.userByCountryChartsWrapper}
+        spacing={0}
+      >
+        {usersByCountryCharts}
+        <Text
+          className={classes.usersByCountryText}
+          size="sm"
+          color="gray"
+          weight={500}
+        >
+          Users By Countries
+        </Text>
+      </Stack>
+    </Stack>
+  );
+
+  const content = (
+    <Stack py={30} className={classes.content} spacing={32}>
+      {overviewItems}
+      <Group
+        className={classes.row2Wrapper}
+        pr={44}
+        spacing={20}
+        align="stretch"
+        style={{
+          width: '100%',
+          height: '100%',
+          flexGrow: 1,
+          overflow: 'hidden',
+        }}
+      >
+        <MediaQuery largerThan="xl" styles={{ display: 'none' }}>
+          {analytics}
+        </MediaQuery>
+        <MediaQuery smallerThan="xl" styles={{ display: 'none' }}>
+          <ScrollArea style={{ width: '100%', height: '100%' }}>
+            {analytics}
+          </ScrollArea>
+        </MediaQuery>
+        <Stack className={classes.ordersWrapper} spacing={20}>
+          {orderTable}
+          {androidApkUploader}
+        </Stack>
+      </Group>
+    </Stack>
+  );
+
   /* -------------------------------- render -------------------------------- */
 
   return (
@@ -515,110 +732,14 @@ const Home: NextPage = () => {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       {/* body */}
-      <Stack py={30} className={classes.body} spacing={32}>
-        <Group px={44} spacing={40} style={{ flex: 'none' }}>
-          <OverviewItem
-            icon={<IconTruckDelivery />}
-            title="Total Orders"
-            value={totalOrders != null ? <Counter count={totalOrders} /> : '_'}
-            href="/orders"
-          />
-          <OverviewItem
-            icon={<IconReportMoney />}
-            title="Total Revenue"
-            value={
-              totalRevenue != null ? (
-                <Group spacing={4}>
-                  <Text weight={500}>LKR</Text>
-                  <Counter count={totalRevenue} />
-                </Group>
-              ) : (
-                '_'
-              )
-            }
-            href="/orders"
-          />
-          <OverviewItem
-            icon={<IconShoppingCart />}
-            title="Total Products"
-            value={
-              totalProducts != null ? <Counter count={totalProducts} /> : '_'
-            }
-            href="/products"
-          />
-          <OverviewItem
-            icon={<IconSortAscending />}
-            title="New Orders"
-            value={newOrders != null ? <Counter count={newOrders} /> : '_'}
-            href="/orders"
-          />
-        </Group>
-        <Group
-          pr={44}
-          spacing={20}
-          align="stretch"
-          style={{
-            width: '100%',
-            height: '100%',
-            flexGrow: 1,
-            overflow: 'hidden',
-          }}
-        >
-          <ScrollArea
-            style={{ width: '70%', flex: 'none', overflowX: 'hidden' }}
-          >
-            <Stack mr={16} spacing={40}>
-              <Stack align="center" style={{ height: 300 }} spacing={0}>
-                <PageViewsChart
-                  loading={pageViewsLoading}
-                  data={pageViewsData ?? []}
-                />
-                <Text size="sm" color="gray" weight={500}>
-                  Page Views
-                </Text>
-              </Stack>
-              <Stack align="center" style={{ height: 300 }} spacing={0}>
-                <UserEngagementDurationChart
-                  loading={userEngagementDurationLoading}
-                  data={userEngagementDurationData ?? []}
-                />
-                <Text size="sm" color="gray" weight={500}>
-                  User Engagement Duration
-                </Text>
-              </Stack>
-              <Stack align="center" style={{ height: 300 }} spacing={0}>
-                <TotalUsersChart
-                  loading={totalUsersLoading}
-                  data={totalUsersData ?? []}
-                />
-                <Text size="sm" color="gray" weight={500}>
-                  Total Users
-                </Text>
-              </Stack>
-              <Stack align="center" style={{ height: 500 }} spacing={0}>
-                <Group style={{ height: '100%', width: '100%' }}>
-                  <Box style={{ height: '100%', width: '70%' }}>
-                    <UserWorldMap data={usersByCountryData ?? []} />
-                  </Box>
-                  <Box style={{ height: '100%', width: '30%' }}>
-                    <UserByCountryChart
-                      loading={usersByCountryLoading}
-                      data={usersByCountryData ?? []}
-                    />
-                  </Box>
-                </Group>
-                <Text mt={-20} size="sm" color="gray" weight={500}>
-                  Users By Countries
-                </Text>
-              </Stack>
-            </Stack>
-          </ScrollArea>
-          <Stack style={{ width: '30%' }} spacing={20}>
-            {orderTable}
-            {androidApkUploader}
-          </Stack>
-        </Group>
-      </Stack>
+      <MediaQuery largerThan="xl" styles={{ display: 'none' }}>
+        <ScrollArea style={{ width: '100%', height: '100%' }}>
+          {content}
+        </ScrollArea>
+      </MediaQuery>
+      <MediaQuery smallerThan="xl" styles={{ display: 'none' }}>
+        {content}
+      </MediaQuery>
     </Center>
   );
 };
@@ -629,10 +750,31 @@ const Home: NextPage = () => {
 
 const useStyles = createStyles((theme) => {
   return {
-    body: {
+    content: {
       width: '100%',
       height: '100%',
       overflow: 'hidden',
+      [`@media (max-width: ${theme.breakpoints.xl}px)`]: {
+        height: 'auto',
+      },
+    },
+    overviewWrapper: {
+      flex: 'none',
+      [`@media (max-width: ${theme.breakpoints.lg}px)`]: {
+        gap: 20,
+        paddingRight: 20,
+        paddingLeft: 20,
+      },
+      [`@media (max-width: ${theme.breakpoints.sm}px)`]: {
+        flexDirection: 'column',
+      },
+    },
+    overViewRow: {
+      width: '100%',
+      [`@media (max-width: ${theme.breakpoints.lg}px)`]: {
+        flexDirection: 'column',
+        gap: 20,
+      },
     },
     overviewCard: {
       width: 200,
@@ -646,11 +788,90 @@ const useStyles = createStyles((theme) => {
       borderRadius: 8,
       flexGrow: 1,
       overflow: 'hidden',
+      [`@media (max-width: ${theme.breakpoints.xl}px)`]: {
+        gap: 16,
+      },
     },
     apkCard: {
       width: '100%',
       border: `2px solid ${theme.colors.gray[4]}`,
       borderRadius: 8,
+    },
+    row2Wrapper: {
+      [`@media (max-width: ${theme.breakpoints.xl}px)`]: {
+        height: 'auto',
+        paddingRight: 44,
+        paddingLeft: 44,
+        flexDirection: 'column',
+      },
+      [`@media (max-width: ${theme.breakpoints.lg}px)`]: {
+        paddingRight: 20,
+        paddingLeft: 20,
+      },
+    },
+    analyticsWrapper: {
+      [`@media (max-width: ${theme.breakpoints.xl}px)`]: {
+        marginRight: 0,
+      },
+    },
+    analyticsRow1: {
+      height: 300,
+      [`@media (max-width: ${theme.breakpoints.lg}px)`]: {
+        flexDirection: 'column',
+        height: 600,
+      },
+    },
+    analyticsRow1Chart: {
+      height: '100%',
+      width: '100%',
+      [`@media (max-width: ${theme.breakpoints.lg}px)`]: {
+        height: 300,
+      },
+    },
+    userByCountryChartsWrapper: {
+      height: 500,
+      [`@media (max-width: ${theme.breakpoints.lg}px)`]: {
+        height: 850,
+        gap: 20,
+      },
+    },
+    userByCountryCharts: {
+      height: '100%',
+      width: '100%',
+      [`@media (max-width: ${theme.breakpoints.lg}px)`]: {
+        flexDirection: 'column',
+        gap: 0,
+      },
+    },
+    userWorldMap: {
+      height: '100%',
+      width: '70%',
+      [`@media (max-width: ${theme.breakpoints.lg}px)`]: {
+        height: 500,
+        width: '100%',
+      },
+    },
+    userByCountryChart: {
+      height: '100%',
+      width: '30%',
+      [`@media (max-width: ${theme.breakpoints.lg}px)`]: {
+        flexDirection: 'column',
+        height: 300,
+        width: '100%',
+      },
+    },
+    usersByCountryText: {
+      marginTop: -20,
+      [`@media (max-width: ${theme.breakpoints.lg}px)`]: {
+        marginTop: 0,
+      },
+    },
+    ordersWrapper: {
+      width: '30%',
+      [`@media (max-width: ${theme.breakpoints.xl}px)`]: {
+        width: '100%',
+        marginTop: 12,
+      },
     },
   };
 });

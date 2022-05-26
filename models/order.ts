@@ -127,7 +127,7 @@ export const orderConverter = {
       data.orderId,
       DeliveryStatus[data.orderStatus as DeliveryStatusKey],
       data.orderDate,
-      data.totalPaid,
+      Number(data.totalPaid),
       data.userId,
       data.customerEmail,
       data.addressOne,

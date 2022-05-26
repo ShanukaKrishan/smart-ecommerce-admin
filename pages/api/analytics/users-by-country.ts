@@ -19,7 +19,7 @@ const analytics = async (
   const [response] = await analyticsDataClient.runReport({
     property: `properties/316463457`,
     dateRanges: [
-      { startDate: startDate.format('YYYY-MM-DD'), endDate: 'today' },
+      { startDate: startDate.format('2022-05-01'), endDate: 'today' },
     ],
     dimensions: [{ name: 'country' }],
     metrics: [{ name: 'totalUsers' }],

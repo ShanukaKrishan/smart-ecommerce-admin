@@ -74,8 +74,8 @@ const test = async () => {
     dateRanges: [
       { startDate: startDate.format('YYYY-MM-DD'), endDate: 'today' },
     ],
-    dimensions: [{ name: 'unifiedScreenClass' }],
-    metrics: [{ name: 'screenPageViews' }],
+    dimensions: [{ name: 'platform' }],
+    metrics: [{ name: 'totalUsers' }],
   });
   // check response contain rows
   if (!response.rows) return;

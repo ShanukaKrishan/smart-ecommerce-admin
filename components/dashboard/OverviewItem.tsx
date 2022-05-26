@@ -37,7 +37,11 @@ const OverviewItem = ({ icon, title, value, href }: Props): JSX.Element => {
       <Group px={8}>
         {icon}
         <Stack spacing={0}>
-          <Text size="xs" color="gray">
+          <Text
+            size="xs"
+            color="gray"
+            style={{ textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+          >
             {title}
           </Text>
           {value}

@@ -1,21 +1,29 @@
+import { Center } from '@mantine/core';
 import React, { useState } from 'react';
-import { Pie, PieChart, ResponsiveContainer, Sector } from 'recharts';
+import {
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Tooltip,
+  Cell,
+  Sector,
+} from 'recharts';
+import { UsersByPlatformData } from '../../pages/api/analytics/users-by-platform';
+import LottieLoader from '../LottieLoader';
 
-interface Props {}
+interface Props {
+  loading: boolean;
+  data: UsersByPlatformData[];
+}
 
-const PieChartTwo = (props: Props): JSX.Element => {
+const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
+
+const UserByPlatformChart = ({ loading, data }: Props): JSX.Element => {
   /* --------------------------------- hooks -------------------------------- */
 
   const [activeIndex, setActiveIndex] = useState(0);
 
   /* -------------------------------- helpers ------------------------------- */
-
-  const data = [
-    { name: 'Group A', value: 400 },
-    { name: 'Group B', value: 300 },
-    { name: 'Group C', value: 300 },
-    { name: 'Group D', value: 200 },
-  ];
 
   const renderActiveShape = (props: any) => {
     const RADIAN = Math.PI / 180;
@@ -76,7 +84,9 @@ const PieChartTwo = (props: Props): JSX.Element => {
           y={ey}
           textAnchor={textAnchor}
           fill="#333"
-        >{`PV ${value}`}</text>
+        >
+          {`${value} Users`}
+        </text>
         <text
           x={ex + (cos >= 0 ? 1 : -1) * 12}
           y={ey}
@@ -84,11 +94,13 @@ const PieChartTwo = (props: Props): JSX.Element => {
           textAnchor={textAnchor}
           fill="#999"
         >
-          {`(Rate ${(percent * 100).toFixed(2)}%)`}
+          {`(${payload.platform})`}
         </text>
       </g>
     );
   };
+
+  /* ------------------------------- handlers ------------------------------- */
 
   const onPieEnter = (_: any, index: number) => {
     setActiveIndex(index);
@@ -96,24 +108,34 @@ const PieChartTwo = (props: Props): JSX.Element => {
 
   /* -------------------------------- render -------------------------------- */
 
-  return (
+  return loading ? (
+    <Center style={{ width: '100%', height: '100%' }}>
+      <LottieLoader />
+    </Center>
+  ) : (
     <ResponsiveContainer width="100%" height="100%">
       <PieChart>
         <Pie
-          activeIndex={activeIndex}
-          activeShape={renderActiveShape}
           data={data}
-          cx="50%"
-          cy="50%"
+          dataKey="value"
+          fill="#82ca9d"
           innerRadius={60}
           outerRadius={80}
-          fill="#8884d8"
-          dataKey="value"
+          paddingAngle={5}
+          // label
+          nameKey="platform"
+          activeIndex={activeIndex}
+          activeShape={renderActiveShape}
           onMouseEnter={onPieEnter}
-        />
+        >
+          {data.map((entry, index) => (
+            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+          ))}
+        </Pie>
+        {/* <Tooltip /> */}
       </PieChart>
     </ResponsiveContainer>
   );
 };
 
-export default PieChartTwo;
+export default UserByPlatformChart;
