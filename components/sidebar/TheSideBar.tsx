@@ -17,6 +17,7 @@ import {
   IconShoppingCart,
   IconTruckDelivery,
   IconUser,
+  IconUserCheck,
 } from '@tabler/icons';
 import React from 'react';
 import { useSelector } from 'react-redux';
@@ -39,6 +40,10 @@ const TheSideBar = (props: Props): JSX.Element => {
 
   const drawerOpened = useSelector(
     (state: RootState) => state.home.drawerOpened
+  );
+
+  const superAdmin = useSelector(
+    (state: RootState) => state.identity.superAdmin
   );
 
   const { classes } = useStyles();
@@ -113,6 +118,13 @@ const TheSideBar = (props: Props): JSX.Element => {
             icon={<IconMessages size={20} />}
             path="chat"
           />
+          {superAdmin && (
+            <SideBarItem
+              title="Admins"
+              icon={<IconUserCheck size={20} />}
+              path="admins"
+            />
+          )}
         </Stack>
       </Navbar.Section>
       <Divider />

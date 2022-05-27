@@ -1,10 +1,12 @@
 import { AppShell } from '@mantine/core';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
+import { doc, getDoc, getFirestore } from 'firebase/firestore';
 import { AuthAction, useAuthUser, withAuthUser } from 'next-firebase-auth';
 import React, { ReactNode, useEffect } from 'react';
 import { useDispatch } from 'react-redux';
+import { adminConverter } from '../models/admin';
 import { setUrlPath } from '../redux/reducers/homeReducer';
-import { setToken } from '../redux/reducers/identityReducer';
+import { setSuperAdmin, setToken } from '../redux/reducers/identityReducer';
 import LoadingOverlay from './LoadingOverlay';
 import TheSideBar from './sidebar/TheSideBar';
 import TheTopBar from './TheTopBar';
@@ -26,7 +28,7 @@ const HomeLayout = ({ children }: Props): JSX.Element => {
 
   const dispatch = useDispatch();
 
-  const { getIdToken } = useAuthUser();
+  const { id, getIdToken } = useAuthUser();
 
   const firebaseAuth = getAuth();
 
@@ -62,6 +64,28 @@ const HomeLayout = ({ children }: Props): JSX.Element => {
     });
     return () => unsubscribe();
   }, [firebaseAuth, dispatch]);
+
+  useEffect(() => {
+    const syncAdmin = async () => {
+      // check id exist
+      if (id == null) return;
+      // get firestore
+      const firestore = getFirestore();
+      // create reference with converter
+      const ref = doc(firestore, 'admins', id).withConverter(adminConverter);
+      // get snapshot
+      const snapshot = await getDoc(ref);
+      // check snapshot contains data
+      if (!snapshot.exists()) {
+        return;
+      }
+      // get admin
+      const admin = snapshot.data();
+      // save super admin
+      dispatch(setSuperAdmin(admin.superAdmin));
+    };
+    syncAdmin();
+  }, [dispatch, id]);
 
   /* -------------------------------- render -------------------------------- */
 
