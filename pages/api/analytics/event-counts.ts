@@ -1,9 +1,9 @@
 import { BetaAnalyticsDataClient } from '@google-analytics/data';
 import { NextApiRequest, NextApiResponse } from 'next';
 
-export interface UsersByPlatformData {
-  platform: string;
-  value: number;
+export interface EventCountsData {
+  event: string;
+  count: number;
 }
 
 const analytics = async (
@@ -16,11 +16,11 @@ const analytics = async (
   const [response] = await analyticsDataClient.runReport({
     property: `properties/316463457`,
     dateRanges: [{ startDate: '2022-05-01', endDate: 'today' }],
-    dimensions: [{ name: 'platform' }],
-    metrics: [{ name: 'totalUsers' }],
+    dimensions: [{ name: 'eventName' }],
+    metrics: [{ name: 'eventCount' }],
   });
   // create data
-  const data: UsersByPlatformData[] = [];
+  const data: EventCountsData[] = [];
   // check response contain rows
   if (!response.rows) {
     return res.status(200).json({ success: true, data });
@@ -28,15 +28,15 @@ const analytics = async (
   // iterate though rows
   for (const row of response.rows) {
     // get platform name
-    const platformName = row.dimensionValues?.[0].value;
+    const eventName = row.dimensionValues?.[0].value;
     // check value exist
-    if (!platformName) continue;
+    if (!eventName) continue;
     // get metric value
     const metricValue = row.metricValues?.[0].value;
     // check value exist
     if (!metricValue) continue;
     // push data to array
-    data.push({ platform: platformName, value: Number(metricValue) });
+    data.push({ event: eventName, count: Number(metricValue) });
   }
   return res.status(200).json({ success: true, data });
 };

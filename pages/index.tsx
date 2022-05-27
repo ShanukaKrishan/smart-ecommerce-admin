@@ -7,6 +7,7 @@ import {
   Group,
   MediaQuery,
   ScrollArea,
+  Select,
   Stack,
   Table,
   Text,
@@ -62,8 +63,10 @@ import {
   fetchPageViews,
   fetchUsersByCountry,
   fetchUsersByPlatform,
+  fetchEventCounts,
 } from '../services/analytics';
 import IsSameOrAfter from 'dayjs/plugin/isSameOrAfter';
+import IsSameOrBefore from 'dayjs/plugin/isSameOrBefore';
 import Counter from '../components/Counter';
 import UserEngagementDurationChart from '../components/dashboard/UserEngagementDurationChart';
 import TotalUsersChart from '../components/dashboard/TotalUsersChart';
@@ -72,10 +75,12 @@ import UserWorldMap from '../components/dashboard/UserWorldMap';
 import UserByCountryChart from '../components/dashboard/UserByCountryChart';
 import UserByPlatformChart from '../components/dashboard/UserByPlatformChart';
 import RevenuePerDayChart, {
-  RevenuePerDayData,
-} from '../components/dashboard/RevenuePerDayChart';
+  RevenueByDateData,
+} from '../components/dashboard/RevenueByDateChart';
+import AppInstallsCharts from '../components/dashboard/AppStatsCharts';
 
 dayjs.extend(IsSameOrAfter);
+dayjs.extend(IsSameOrBefore);
 
 /* -------------------------------------------------------------------------- */
 /*                                  component                                 */
@@ -109,9 +114,14 @@ const Home: NextPage = () => {
 
   const [newOrders, setNewOrders] = useState<number>();
 
-  const [revenuePerDayData, setRevenuePerDayData] = useState<
-    RevenuePerDayData[]
+  const [revenueByDateData, setRevenueByDateData] = useState<
+    RevenueByDateData[]
   >([]);
+
+  const [revenueByDateDataLoading, setRevenueByDateDataLoading] =
+    useState(false);
+
+  const [revenueBasis, setRevenueBasis] = useState<string | null>('daily');
 
   const router = useRouter();
 
@@ -141,6 +151,11 @@ const Home: NextPage = () => {
   const { data: usersByPlatformData, isLoading: usersByPlatformLoading } =
     useQuery('users-by-platform-analytics', fetchUsersByPlatform);
 
+  const { data: eventCountsData, isLoading: eventCountsLoading } = useQuery(
+    'event-counts-analytics',
+    fetchEventCounts
+  );
+
   useEffect(() => {
     const getOrders = async () => {
       // get firestore
@@ -168,35 +183,6 @@ const Home: NextPage = () => {
       }
       // save orders
       setOrders(orders);
-      // return orders
-      return orders;
-    };
-
-    const calculateRevenuePerDay = (orders: Order[]) => {
-      // create data
-      const data: RevenuePerDayData[] = [];
-      // iterate through days
-      for (
-        let day = dayjs().subtract(2, 'week');
-        day.isBefore(Date.now());
-        day = day.add(1, 'day')
-      ) {
-        // add to data
-        data.push({ name: day.format('D MMM'), date: day.toDate(), value: 0 });
-      }
-      // iterate through orders
-      for (const order of orders) {
-        // get index of data array
-        const index = data.findIndex((data) =>
-          dayjs(data.date).isSame(dayjs(order.date), 'day')
-        );
-        // check index exist
-        if (index === -1) continue;
-        // increase value
-        data[index].value += order.total;
-      }
-      // save data
-      setRevenuePerDayData(data);
     };
 
     (async function () {
@@ -204,9 +190,8 @@ const Home: NextPage = () => {
         // start loading
         setOrdersLoading(true);
         // get orders
-        const orders = await getOrders();
+        await getOrders();
         // create revenue data
-        calculateRevenuePerDay(orders);
       } catch (error) {
         console.log(error);
         // show notification
@@ -217,6 +202,120 @@ const Home: NextPage = () => {
       }
     })();
   }, []);
+
+  useEffect(() => {
+    const getOrders = async () => {
+      // get firestore
+      const firestore = getFirestore();
+      // create reference with converter
+      const ref = collection(firestore, 'orders').withConverter(orderConverter);
+      // create query
+      const queryRef = query(
+        ref,
+        where('orderStatus', '==', 'Pending'),
+        where(
+          'orderDate',
+          '>=',
+          dayjs().subtract(10, getDatePrefix(revenueBasis!)).toDate()
+        )
+      );
+      // get snapshot
+      const snapshot = await getDocs(queryRef);
+      // create array to hold orders
+      const orders: Order[] = [];
+      // iterate through orders
+      for (const doc of snapshot.docs) {
+        // get order
+        const order = doc.data();
+        // initialize order
+        await order.initialize();
+        // add order to array
+        orders.push(order);
+      }
+      // save orders
+      setOrders(orders);
+      // return orders
+      return orders;
+    };
+
+    const getDatePrefix = (revenueBasis: string) => {
+      switch (revenueBasis) {
+        case 'daily':
+          return 'day';
+        case 'monthly':
+          return 'month';
+        case 'yearly':
+          return 'year';
+        default:
+          throw new Error('invalid basis');
+      }
+    };
+
+    const getFormatString = (revenueBasis: string) => {
+      switch (revenueBasis) {
+        case 'daily':
+          return 'D MMM';
+        case 'monthly':
+          return 'MMM';
+        case 'yearly':
+          return 'YYYY';
+        default:
+          throw new Error('invalid basis');
+      }
+    };
+
+    const calculateRevenue = (orders: Order[]) => {
+      // create data
+      const data: RevenueByDateData[] = [];
+      // iterate through days
+      for (
+        let day = dayjs().subtract(10, getDatePrefix(revenueBasis!));
+        day.isSameOrBefore(dayjs(), getDatePrefix(revenueBasis!));
+        day = day.add(1, getDatePrefix(revenueBasis!))
+      ) {
+        // add to data
+        data.push({
+          name: day.format(getFormatString(revenueBasis!)),
+          date: day.toDate(),
+          value: 0,
+        });
+      }
+      // iterate through orders
+      for (const order of orders) {
+        // get index of data array
+        const index = data.findIndex((data) =>
+          dayjs(data.date).isSame(
+            dayjs(order.date),
+            getDatePrefix(revenueBasis!)
+          )
+        );
+        // check index exist
+        if (index === -1) continue;
+        // increase value
+        data[index].value += order.total;
+      }
+      // save data
+      setRevenueByDateData(data);
+    };
+
+    (async function () {
+      try {
+        // start loading
+        setRevenueByDateDataLoading(true);
+        // get orders
+        const orders = await getOrders();
+        // create revenue data
+        calculateRevenue(orders);
+      } catch (error) {
+        console.log(error);
+        // show notification
+        showErrorNotification('Error Occurred');
+      } finally {
+        // stop loading
+        setRevenueByDateDataLoading(false);
+      }
+    })();
+  }, [revenueBasis]);
 
   useEffect(() => {
     const getOrderSummary = async () => {
@@ -614,6 +713,18 @@ const Home: NextPage = () => {
     </Stack>
   );
 
+  const appInstallsChart = (
+    <Stack align="center" style={{ height: 300 }} spacing={0}>
+      <AppInstallsCharts
+        loading={eventCountsLoading}
+        data={eventCountsData ?? []}
+      />
+      <Text size="sm" color="gray" weight={500}>
+        App Stats
+      </Text>
+    </Stack>
+  );
+
   const userEngagementDurationChart = (
     <Stack align="center" style={{ height: 300 }} spacing={0}>
       <UserEngagementDurationChart
@@ -641,12 +752,25 @@ const Home: NextPage = () => {
   const revenuePerDayChart = (
     <Stack align="center" style={{ height: 300 }} spacing={0}>
       <RevenuePerDayChart
-        loading={ordersLoading}
-        data={revenuePerDayData ?? []}
+        loading={revenueByDateDataLoading}
+        data={revenueByDateData ?? []}
       />
-      <Text size="sm" color="gray" weight={500}>
-        Revenue
-      </Text>
+      <Group>
+        <Text size="sm" color="gray" weight={500}>
+          Revenue
+        </Text>
+        <Select
+          size="sm"
+          value={revenueBasis}
+          onChange={setRevenueBasis}
+          data={[
+            { value: 'daily', label: 'Daily' },
+            { value: 'monthly', label: 'Monthly' },
+            { value: 'yearly', label: 'Yearly' },
+          ]}
+          style={{ width: 120 }}
+        />
+      </Group>
     </Stack>
   );
 
@@ -670,6 +794,7 @@ const Home: NextPage = () => {
         {pageViewsChart}
         {userPlatformChart}
       </Group>
+      {appInstallsChart}
       {userEngagementDurationChart}
       {totalUsersChart}
       {revenuePerDayChart}

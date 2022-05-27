@@ -1,6 +1,9 @@
 import { BetaAnalyticsDataClient } from '@google-analytics/data';
 import dayjs from 'dayjs';
+import IsSameOrBefore from 'dayjs/plugin/isSameOrBefore';
 import { NextApiRequest, NextApiResponse } from 'next';
+
+dayjs.extend(IsSameOrBefore);
 
 export interface UserEngagementDurationData {
   name: string;
@@ -30,7 +33,7 @@ const analytics = async (
   // iterate through days
   for (
     let day = dayjs(startDate);
-    day.isBefore(Date.now());
+    day.isSameOrBefore(dayjs(), 'day');
     day = day.add(1, 'day')
   ) {
     // add to data

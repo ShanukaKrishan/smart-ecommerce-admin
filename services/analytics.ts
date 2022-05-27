@@ -1,4 +1,5 @@
 import { QueryFunction } from 'react-query';
+import { EventCountsData } from '../pages/api/analytics/event-counts';
 import { PageViewsData } from '../pages/api/analytics/page-views';
 import { TotalUsersData } from '../pages/api/analytics/total-users';
 import { UserEngagementDurationData } from '../pages/api/analytics/user-engagement-duration';
@@ -28,6 +29,11 @@ interface UsersByPlatformResponse {
 interface PageViewsResponse {
   success: boolean;
   data: PageViewsData[];
+}
+
+interface EventCountsResponse {
+  success: boolean;
+  data: EventCountsData[];
 }
 
 export const fetchUserEngagementDuration: QueryFunction<
@@ -103,6 +109,21 @@ export const fetchUsersByPlatform: QueryFunction<
   });
   // decode response
   const resJson: UsersByPlatformResponse = await res.json();
+  // check error
+  if (!res.ok || !resJson.success) {
+    throw new Error('Analytics fetch error');
+  }
+  // return data
+  return resJson.data;
+};
+
+export const fetchEventCounts: QueryFunction<EventCountsData[]> = async () => {
+  // make request
+  const res = await fetch('/api/analytics/event-counts', {
+    method: 'GET',
+  });
+  // decode response
+  const resJson: EventCountsResponse = await res.json();
   // check error
   if (!res.ok || !resJson.success) {
     throw new Error('Analytics fetch error');

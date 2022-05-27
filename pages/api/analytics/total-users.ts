@@ -1,6 +1,9 @@
 import { BetaAnalyticsDataClient } from '@google-analytics/data';
 import dayjs from 'dayjs';
+import IsSameOrBefore from 'dayjs/plugin/isSameOrBefore';
 import { NextApiRequest, NextApiResponse } from 'next';
+
+dayjs.extend(IsSameOrBefore);
 
 export interface TotalUsersData {
   name: string;
@@ -31,7 +34,7 @@ const analytics = async (
   // iterate through days
   for (
     let day = dayjs(startDate);
-    day.isBefore(Date.now());
+    day.isSameOrBefore(dayjs(), 'day');
     day = day.add(1, 'day')
   ) {
     // add to data
@@ -63,24 +66,24 @@ const analytics = async (
 
 export default analytics;
 
-const test = async () => {
-  // create client
-  const analyticsDataClient = new BetaAnalyticsDataClient();
-  // create starting date
-  const startDate = dayjs().subtract(2, 'week');
-  // make request
-  const [response] = await analyticsDataClient.runReport({
-    property: `properties/316463457`,
-    dateRanges: [
-      { startDate: startDate.format('YYYY-MM-DD'), endDate: 'today' },
-    ],
-    dimensions: [{ name: 'platform' }],
-    metrics: [{ name: 'totalUsers' }],
-  });
-  // check response contain rows
-  if (!response.rows) return;
-  // iterate though rows
-  for (const row of response.rows) {
-    console.log(row);
-  }
-};
+// const test = async () => {
+//   // create client
+//   const analyticsDataClient = new BetaAnalyticsDataClient();
+//   // create starting date
+//   const startDate = dayjs().subtract(4, 'week');
+//   // make request
+//   const [response] = await analyticsDataClient.runReport({
+//     property: `properties/316463457`,
+//     dateRanges: [
+//       { startDate: startDate.format('YYYY-MM-DD'), endDate: 'today' },
+//     ],
+//     dimensions: [{ name: 'eventName' }],
+//     metrics: [{ name: 'eventCount' }],
+//   });
+//   // check response contain rows
+//   if (!response.rows) return;
+//   // iterate though rows
+//   for (const row of response.rows) {
+//     console.log(row);
+//   }
+// };
