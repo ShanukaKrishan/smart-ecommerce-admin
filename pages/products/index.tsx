@@ -180,7 +180,7 @@ const Products: NextPage = () => {
         </td>
         <td style={{ whiteSpace: 'nowrap' }}>{element.name}</td>
         <td style={{ minWidth: '250px' }}>{element.description}</td>
-        <td style={{ whiteSpace: 'nowrap' }}>LKR {element.price}</td>
+        <td style={{ whiteSpace: 'nowrap' }}>USD {element.price}</td>
         <td style={{ whiteSpace: 'nowrap' }}>{element.brand}</td>
         <td style={{ whiteSpace: 'nowrap' }}>{element.category}</td>
         <td style={{ whiteSpace: 'nowrap' }}>

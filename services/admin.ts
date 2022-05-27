@@ -58,3 +58,23 @@ export const getAdmin = async (id: string) => {
   // return data
   return { displayName: resJson.displayName, email: resJson.email };
 };
+
+export const updateAdminPassword = async ({
+  id,
+  password,
+}: {
+  id: string;
+  password: string;
+}) => {
+  // register in iam
+  const response = await fetch(`/api/admin/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ password }),
+  });
+  // get response json
+  const responseJson = await response.json();
+  // check success
+  if (!response.ok || !responseJson.success) {
+    throw new Error('admin update error');
+  }
+};

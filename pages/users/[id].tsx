@@ -223,7 +223,7 @@ const UserDetails = (props: Props): JSX.Element => {
   const rows = favorites.map((element, index) => (
     <tr key={index}>
       <td style={{ whiteSpace: 'nowrap' }}>{element.name}</td>
-      <td style={{ whiteSpace: 'nowrap' }}>LKR {element.price}</td>
+      <td style={{ whiteSpace: 'nowrap' }}>USD {element.price}</td>
       <td style={{ whiteSpace: 'nowrap' }}>
         <Checkbox ml={20} checked={element.featured} onChange={() => {}} />
       </td>

@@ -477,13 +477,13 @@ const EditOrder = (): JSX.Element => {
                       <Text size="xs" weight={500}>
                         Sub Total
                       </Text>
-                      <Text size="xs">LKR {order?.total}</Text>
+                      <Text size="xs">USD {order?.total}</Text>
                     </Group>
                     <Group className={classes.totalWrapper} position="apart">
                       <Text size="xs" weight={500}>
                         Total
                       </Text>
-                      <Text size="xs">LKR {order?.total}</Text>
+                      <Text size="xs">USD {order?.total}</Text>
                     </Group>
                   </Stack>
                 </Stack>

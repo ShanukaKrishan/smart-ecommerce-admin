@@ -58,7 +58,9 @@ const SideBarItem = ({
       <ThemeIcon radius="xl" size="lg" variant="light">
         {icon}
       </ThemeIcon>
-      <Text>{title}</Text>
+      <Text color="gray" weight={500}>
+        {title}
+      </Text>
     </Group>
   );
 

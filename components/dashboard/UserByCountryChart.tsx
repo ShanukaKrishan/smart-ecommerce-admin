@@ -24,8 +24,16 @@ const UserByCountryChart = ({ loading, data }: Props): JSX.Element => {
   ) : (
     <ResponsiveContainer width="100%" height="100%">
       <BarChart layout="vertical" data={data} barSize={10}>
-        <YAxis type="category" dataKey="country" style={{ fontSize: 10 }} />
-        <XAxis type="number" allowDecimals={false} />
+        <YAxis
+          type="category"
+          dataKey="country"
+          style={{ fontSize: 10, fontWeight: 500 }}
+        />
+        <XAxis
+          type="number"
+          allowDecimals={false}
+          style={{ fontSize: 10, fontWeight: 500 }}
+        />
         <Tooltip />
         <Bar name="Total Users" dataKey="value" fill="#8884d8" />
       </BarChart>

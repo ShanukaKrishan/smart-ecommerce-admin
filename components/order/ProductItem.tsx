@@ -56,13 +56,13 @@ const ProductItem = ({ firstItem, product, quantity }: Props): JSX.Element => {
               <Text size="xs" weight={500}>
                 Price
               </Text>
-              <Text size="xs">LKR {product.price}</Text>
+              <Text size="xs">USD {product.price}</Text>
             </Group>
             <Group spacing={12}>
               <Text size="xs" weight={500}>
                 Total
               </Text>
-              <Text size="xs">LKR {product.price * quantity}</Text>
+              <Text size="xs">USD {product.price * quantity}</Text>
             </Group>
           </Group>
         </Stack>

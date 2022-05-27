@@ -1,5 +1,13 @@
-import { ActionIcon, Avatar, Center, Stack, Text } from '@mantine/core';
-import { IconPencil } from '@tabler/icons';
+import {
+  ActionIcon,
+  Avatar,
+  Center,
+  ColorSwatch,
+  Group,
+  Stack,
+  Text,
+} from '@mantine/core';
+import { IconChevronRight, IconPencil } from '@tabler/icons';
 import {
   collection,
   getFirestore,
@@ -87,7 +95,12 @@ const Users: NextPage = () => {
           imageProps={{ style: { objectFit: 'cover' } }}
         />
       </td>
-      <td style={{ whiteSpace: 'nowrap' }}>{element.userName}</td>
+      <td style={{ whiteSpace: 'nowrap' }}>
+        <Group>
+          {element.userName}
+          {element.online && <ColorSwatch mb={2} size={10} color="green" />}
+        </Group>
+      </td>
       <td style={{ whiteSpace: 'nowrap' }}>{element.email}</td>
       <td style={{ whiteSpace: 'nowrap' }}>{element.phoneNumber}</td>
       <td>
@@ -99,7 +112,7 @@ const Users: NextPage = () => {
             size="lg"
             onClick={() => viewUser(index)}
           >
-            <IconPencil />
+            <IconChevronRight />
           </ActionIcon>
         </Center>
       </td>

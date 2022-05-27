@@ -12,7 +12,7 @@ import {
   TextInput,
 } from '@mantine/core';
 import { useDebouncedValue } from '@mantine/hooks';
-import { IconPencil, IconSearch } from '@tabler/icons';
+import { IconChevronRight, IconPencil, IconSearch } from '@tabler/icons';
 import dayjs from 'dayjs';
 import {
   collection,
@@ -269,7 +269,7 @@ export const generateOrderRows = (
       <td style={{ whiteSpace: 'nowrap' }}>
         Total {element.products.length} Items
       </td>
-      <td style={{ whiteSpace: 'nowrap' }}>LKR {element.total}</td>
+      <td style={{ whiteSpace: 'nowrap' }}>USD {element.total}</td>
       <td style={{ whiteSpace: 'nowrap' }}>
         <Group align="center" spacing={12}>
           <ColorSwatch
@@ -293,7 +293,7 @@ export const generateOrderRows = (
             size="lg"
             onClick={() => editOrder(index)}
           >
-            <IconPencil />
+            <IconChevronRight />
           </ActionIcon>
         </Center>
       </td>

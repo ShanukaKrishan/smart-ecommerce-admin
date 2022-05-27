@@ -7,6 +7,7 @@ import {
   createStyles,
   Dialog,
   Group,
+  Modal,
   Stack,
   Text,
 } from '@mantine/core';
@@ -37,6 +38,7 @@ import { useRouter } from 'next/router';
 import Head from 'next/head';
 import Admin, { adminConverter } from '../../models/admin';
 import { deleteAdmin as deleteAdminSdk } from '../../services/admin';
+import PasswordChangeModal from '../../components/admin/PasswordChangeModal';
 
 /* -------------------------------------------------------------------------- */
 /*                                 components                                 */
@@ -52,6 +54,8 @@ const Admins = (): JSX.Element => {
   const [selectedAdmin, setSelectedAdmin] = useState<Admin>();
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+
+  const [passwordChangeModalOpen, setPasswordChangeModalOpen] = useState(false);
 
   const router = useRouter();
 
@@ -109,6 +113,18 @@ const Admins = (): JSX.Element => {
     setDeleteDialogOpen(false);
   };
 
+  const handlePasswordChange = (index: number): void => {
+    // set selected admin
+    setSelectedAdmin(admins[index]);
+    // open add new dialog
+    setPasswordChangeModalOpen(true);
+  };
+
+  const handlePasswordChangeModalClose = (): void => {
+    // open add new dialog
+    setPasswordChangeModalOpen(false);
+  };
+
   const deleteAdmin = async () => {
     // close dialog
     setDeleteDialogOpen(false);
@@ -133,15 +149,6 @@ const Admins = (): JSX.Element => {
     }
   };
 
-  const editAdmin = (index: number) => {
-    // get admin
-    const admin = admins[index];
-    // set selected admin
-    setSelectedAdmin(admin);
-    // go to edit screen
-    router.push(`/admins/${admin.id}`);
-  };
-
   /* ------------------------------ calculators ----------------------------- */
 
   const rows = admins.map((element, index) => (
@@ -158,7 +165,7 @@ const Admins = (): JSX.Element => {
             color="blue"
             radius="xl"
             size="lg"
-            onClick={() => editAdmin(index)}
+            onClick={() => handlePasswordChange(index)}
           >
             <IconPencil />
           </ActionIcon>
@@ -240,6 +247,18 @@ const Admins = (): JSX.Element => {
           </Group>
         </Group>
       </Dialog>
+      {/* modals */}
+      <Modal
+        centered
+        opened={passwordChangeModalOpen}
+        onClose={handlePasswordChangeModalClose}
+        withCloseButton={false}
+      >
+        <PasswordChangeModal
+          id={selectedAdmin?.id ?? ''}
+          onClose={handlePasswordChangeModalClose}
+        />
+      </Modal>
     </div>
   );
 };

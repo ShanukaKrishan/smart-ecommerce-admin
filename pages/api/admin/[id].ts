@@ -41,6 +41,22 @@ const edit = async (
       console.log(error);
       return res.status(404).json({ success: false });
     }
+  } else if (req.method === 'PATCH') {
+    try {
+      // get auth
+      const auth = getAuth();
+      // get body
+      const body = JSON.parse(req.body);
+      // delete user
+      await auth.updateUser(id as string, {
+        password: body.password,
+      });
+      // return success with created uid
+      return res.status(200).json({ success: true });
+    } catch (error) {
+      console.log(error);
+      return res.status(404).json({ success: false });
+    }
   }
   return res.status(200).json({ success: false });
 };

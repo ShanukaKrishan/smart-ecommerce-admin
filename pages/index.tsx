@@ -1,8 +1,10 @@
 import {
   ActionIcon,
+  Avatar,
   Box,
   Button,
   Center,
+  ColorSwatch,
   createStyles,
   Group,
   MediaQuery,
@@ -15,6 +17,7 @@ import {
 import { Dropzone } from '@mantine/dropzone';
 import {
   IconBrandAndroid,
+  IconChevronRight,
   IconCloudOff,
   IconCloudUpload,
   IconPencil,
@@ -78,6 +81,7 @@ import RevenuePerDayChart, {
   RevenueByDateData,
 } from '../components/dashboard/RevenueByDateChart';
 import AppInstallsCharts from '../components/dashboard/AppStatsCharts';
+import User, { userConverter } from '../models/user';
 
 dayjs.extend(IsSameOrAfter);
 dayjs.extend(IsSameOrBefore);
@@ -92,6 +96,10 @@ const Home: NextPage = () => {
   const [orders, setOrders] = useState<Order[]>([]);
 
   const [ordersLoading, setOrdersLoading] = useState(false);
+
+  const [onlineUsers, setOnlineUsers] = useState<User[]>([]);
+
+  const [onlineUsersLoading, setOnlineUsersLoading] = useState(false);
 
   const [currentApk, setCurrentApk] = useState<{
     name: string;
@@ -318,6 +326,49 @@ const Home: NextPage = () => {
   }, [revenueBasis]);
 
   useEffect(() => {
+    const getUsers = async () => {
+      // get firestore
+      const firestore = getFirestore();
+      // create reference with converter
+      const ref = collection(firestore, 'users').withConverter(userConverter);
+      // create query
+      const queryRef = query(ref, where('userStatus', '==', true), limit(10));
+      // get snapshot
+      const snapshot = await getDocs(queryRef);
+      // create array to hold users
+      const users: User[] = [];
+      // iterate through users
+      for (const doc of snapshot.docs) {
+        // get user
+        const user = doc.data();
+        // initialize user
+        await user.initialize();
+        // add user to array
+        users.push(user);
+      }
+      // save orders
+      setOnlineUsers(users);
+    };
+
+    (async function () {
+      try {
+        // start loading
+        setOnlineUsersLoading(true);
+        // get orders
+        await getUsers();
+        // create revenue data
+      } catch (error) {
+        console.log(error);
+        // show notification
+        showErrorNotification('Error Occurred');
+      } finally {
+        // stop loading
+        setOnlineUsersLoading(false);
+      }
+    })();
+  }, []);
+
+  useEffect(() => {
     const getOrderSummary = async () => {
       // get firestore
       const firestore = getFirestore();
@@ -495,18 +546,6 @@ const Home: NextPage = () => {
   const orderItems = orders.map((element, index) => (
     <tr key={index}>
       <td style={{ whiteSpace: 'nowrap' }}>{element.orderId}</td>
-      {/* <td style={{ whiteSpace: 'nowrap' }}>{element.products.length}</td> */}
-      {/* <td style={{ whiteSpace: 'nowrap' }}>LKR {element.total}</td> */}
-      {/* <td style={{ whiteSpace: 'nowrap' }}>
-        <Group align="center" spacing={12}>
-          <ColorSwatch
-            mb={2}
-            size={10}
-            color={deliveryStepColor(element.status)}
-          />
-          <Text size="sm">{element.status}</Text>
-        </Group>
-      </td> */}
       <td style={{ whiteSpace: 'nowrap' }}>{element.user?.userName}</td>
       <td>
         <Center>
@@ -514,7 +553,7 @@ const Home: NextPage = () => {
             variant="light"
             color="accent"
             radius="xl"
-            size="lg"
+            size="md"
             onClick={() => editOrder(index)}
           >
             <IconPencil />
@@ -527,7 +566,7 @@ const Home: NextPage = () => {
   const orderTable = (
     <Stack py={12} px={8} className={classes.ordersCard} spacing={0}>
       <Text align="center" color="gray" weight={500}>
-        Latest Orders
+        Latest Pending Orders
       </Text>
       {ordersLoading && (
         <Center style={{ width: '100%', height: '100%' }}>
@@ -550,6 +589,72 @@ const Home: NextPage = () => {
               </tr>
             </thead>
             <tbody>{orderItems}</tbody>
+          </Table>
+        </ScrollArea>
+      )}
+    </Stack>
+  );
+
+  const onlineUserItems = onlineUsers.map((element, index) => (
+    <tr key={index}>
+      <td>
+        <Avatar
+          src={element.imageUrl}
+          radius="xl"
+          imageProps={{ style: { objectFit: 'cover' } }}
+        />
+      </td>
+      <td style={{ whiteSpace: 'nowrap' }}>{element.userName}</td>
+      <td>
+        <Center>
+          <ActionIcon
+            variant="light"
+            color="accent"
+            radius="xl"
+            size="md"
+            onClick={() => editOrder(index)}
+          >
+            <IconChevronRight />
+          </ActionIcon>
+        </Center>
+      </td>
+    </tr>
+  ));
+
+  const onlineUserTable = (
+    <Stack py={12} px={8} className={classes.ordersCard} spacing={0}>
+      <Group position="center" spacing={12}>
+        <Text align="center" color="gray" weight={500}>
+          Online Users
+        </Text>
+        <ColorSwatch mb={2} size={10} color="green" />
+        {!onlineUsersLoading && (
+          <Text align="center" color="gray" weight={500}>
+            ({onlineUsers.length})
+          </Text>
+        )}
+      </Group>
+      {onlineUsersLoading && (
+        <Center style={{ width: '100%', height: '100%' }}>
+          <LottieLoader />
+        </Center>
+      )}
+      {!onlineUsersLoading && onlineUsers.length > 0 && (
+        <ScrollArea style={{ width: '100%', flexGrow: 1 }}>
+          <Table
+            verticalSpacing="sm"
+            style={{ width: '100%' }}
+            highlightOnHover
+          >
+            <thead>
+              <tr>
+                <th style={{ width: 40 }}></th>
+                <th>Name</th>
+                {/* <th>Status</th> */}
+                <th style={{ width: 50 }}></th>
+              </tr>
+            </thead>
+            <tbody>{onlineUserItems}</tbody>
           </Table>
         </ScrollArea>
       )}
@@ -663,7 +768,7 @@ const Home: NextPage = () => {
           value={
             totalRevenue != null ? (
               <Group spacing={4}>
-                <Text weight={500}>LKR</Text>
+                <Text weight={500}>USD</Text>
                 <Counter count={totalRevenue} />
               </Group>
             ) : (
@@ -839,8 +944,9 @@ const Home: NextPage = () => {
             {analytics}
           </ScrollArea>
         </MediaQuery>
-        <Stack className={classes.ordersWrapper} spacing={20}>
+        <Stack className={classes.ordersWrapper} spacing={16}>
           {orderTable}
+          {onlineUserTable}
           {androidApkUploader}
         </Stack>
       </Group>

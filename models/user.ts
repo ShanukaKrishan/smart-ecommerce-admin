@@ -5,6 +5,7 @@ export default class User {
   userName: string;
   email: string;
   phoneNumber: string;
+  online: boolean;
   imageUrl: string;
 
   constructor(
@@ -12,12 +13,14 @@ export default class User {
     userName: string,
     email: string,
     phoneNumber: string,
+    online: boolean,
     imageUrl: string
   ) {
     this.id = id;
     this.userName = userName;
     this.email = email;
     this.phoneNumber = phoneNumber;
+    this.online = online;
     this.imageUrl = imageUrl;
   }
 
@@ -25,11 +28,12 @@ export default class User {
 }
 
 export const userConverter = {
-  toFirestore: (order: User) => ({
-    username: order.userName,
-    email: order.email,
-    phone: order.phoneNumber,
-    userImageUrl: order.imageUrl,
+  toFirestore: (user: User) => ({
+    username: user.userName,
+    email: user.email,
+    phone: user.phoneNumber,
+    userStatus: user.online,
+    userImageUrl: user.imageUrl,
   }),
   fromFirestore: (
     snapshot: QueryDocumentSnapshot,
@@ -41,6 +45,7 @@ export const userConverter = {
       data.username,
       data.email,
       data.phone,
+      data.userStatus,
       data.userImageUrl
     );
   },

@@ -60,8 +60,8 @@ const RevenuePerDayChart = ({ loading, data }: Props): JSX.Element => {
     <ResponsiveContainer width="100%" height="100%">
       <AreaChart data={data}>
         <CartesianGrid strokeDasharray="3 3" />
-        <XAxis dataKey="name" style={{ fontSize: 10 }} />
-        <YAxis style={{ fontSize: 10 }} />
+        <XAxis dataKey="name" style={{ fontSize: 10, fontWeight: 500 }} />
+        <YAxis style={{ fontSize: 10, fontWeight: 500 }} />
         <Tooltip />
         <Area
           name="Revenue"

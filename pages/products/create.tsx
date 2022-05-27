@@ -390,7 +390,7 @@ const CreateProduct = (): JSX.Element => {
                   />
                   <NumberInput
                     required
-                    label="Price (LKR)"
+                    label="Price (USD)"
                     {...form.getInputProps('price')}
                   />
                 </Stack>

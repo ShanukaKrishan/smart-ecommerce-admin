@@ -55,8 +55,11 @@ const UserEngagementDurationChart = ({ loading, data }: Props): JSX.Element => {
     <ResponsiveContainer width="100%" height="100%">
       <AreaChart data={data}>
         <CartesianGrid strokeDasharray="3 3" />
-        <XAxis dataKey="name" style={{ fontSize: 10 }} />
-        <YAxis tickFormatter={yAxisFormatter} style={{ fontSize: 10 }} />
+        <XAxis dataKey="name" style={{ fontSize: 10, fontWeight: 500 }} />
+        <YAxis
+          tickFormatter={yAxisFormatter}
+          style={{ fontSize: 10, fontWeight: 500 }}
+        />
         <Tooltip formatter={tooltipFormatter} />
         <Area
           name="Engagement Time"
