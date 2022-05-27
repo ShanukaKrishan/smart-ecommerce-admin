@@ -39,6 +39,7 @@ import Order, { DeliveryStatus, orderConverter } from '../../models/order';
 import ProductItem from '../../components/order/ProductItem';
 import User, { userConverter } from '../../models/user';
 import LottieLoader from '../../components/LottieLoader';
+import dayjs from 'dayjs';
 
 /* -------------------------------------------------------------------------- */
 /*                                 interfaces                                 */
@@ -313,7 +314,7 @@ const EditOrder = (): JSX.Element => {
                     : undefined}
                 </Text>
                 <Text size="xs" color="gray" weight={400}>
-                  Order placed on {order?.date}
+                  Order placed on {dayjs(order?.date).format('YYYY-MM-DD')}
                 </Text>
               </Stack>
               {order?.status !== DeliveryStatus.Canceled && (

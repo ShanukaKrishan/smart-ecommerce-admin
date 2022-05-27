@@ -13,6 +13,7 @@ import {
 } from '@mantine/core';
 import { useDebouncedValue } from '@mantine/hooks';
 import { IconPencil, IconSearch } from '@tabler/icons';
+import dayjs from 'dayjs';
 import {
   collection,
   getFirestore,
@@ -280,7 +281,9 @@ export const generateOrderRows = (
         </Group>
       </td>
       <td style={{ whiteSpace: 'nowrap' }}>{element.user?.userName}</td>
-      <td style={{ whiteSpace: 'nowrap' }}>{element.date}</td>
+      <td style={{ whiteSpace: 'nowrap' }}>
+        {dayjs(element.date).format('YYYY-MM-DD')}
+      </td>
       <td>
         <Center>
           <ActionIcon

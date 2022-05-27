@@ -1,3 +1,4 @@
+import dayjs from 'dayjs';
 import {
   doc,
   getDoc,
@@ -26,7 +27,7 @@ export default class Order {
   id: string;
   orderId: string;
   status: DeliveryStatus;
-  date: string;
+  date: Date;
   total: number;
   userId: string;
   userEmail: string;
@@ -42,7 +43,7 @@ export default class Order {
     id: string,
     orderId: string,
     status: DeliveryStatus,
-    date: string,
+    date: Date,
     total: number,
     userId: string,
     userEmail: string,
@@ -126,7 +127,7 @@ export const orderConverter = {
       snapshot.id,
       data.orderId,
       DeliveryStatus[data.orderStatus as DeliveryStatusKey],
-      data.orderDate,
+      data.orderDate.toDate(),
       Number(data.totalPaid),
       data.userId,
       data.customerEmail,
