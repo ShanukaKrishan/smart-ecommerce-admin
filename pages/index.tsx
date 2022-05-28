@@ -34,6 +34,7 @@ import {
   getDocs,
   getFirestore,
   limit,
+  onSnapshot,
   query,
   setDoc,
   where,
@@ -95,11 +96,11 @@ const Home: NextPage = () => {
 
   const [orders, setOrders] = useState<Order[]>([]);
 
-  const [ordersLoading, setOrdersLoading] = useState(false);
+  const [ordersLoading, setOrdersLoading] = useState(true);
 
   const [onlineUsers, setOnlineUsers] = useState<User[]>([]);
 
-  const [onlineUsersLoading, setOnlineUsersLoading] = useState(false);
+  const [onlineUsersLoading, setOnlineUsersLoading] = useState(true);
 
   const [currentApk, setCurrentApk] = useState<{
     name: string;
@@ -127,7 +128,7 @@ const Home: NextPage = () => {
   >([]);
 
   const [revenueByDateDataLoading, setRevenueByDateDataLoading] =
-    useState(false);
+    useState(true);
 
   const [revenueBasis, setRevenueBasis] = useState<string | null>('daily');
 
@@ -140,112 +141,83 @@ const Home: NextPage = () => {
     isLoading: userEngagementDurationLoading,
   } = useQuery(
     'user-engagement-duration-analytics',
-    fetchUserEngagementDuration
+    fetchUserEngagementDuration,
+    { refetchInterval: 10000 }
   );
 
   const { data: totalUsersData, isLoading: totalUsersLoading } = useQuery(
     'total-users-analytics',
-    fetchTotalUsers
+    fetchTotalUsers,
+    { refetchInterval: 10000 }
   );
 
   const { data: pageViewsData, isLoading: pageViewsLoading } = useQuery(
     'page-views-analytics',
-    fetchPageViews
+    fetchPageViews,
+    { refetchInterval: 10000 }
   );
 
   const { data: usersByCountryData, isLoading: usersByCountryLoading } =
-    useQuery('users-by-country-analytics', fetchUsersByCountry);
+    useQuery('users-by-country-analytics', fetchUsersByCountry, {
+      refetchInterval: 10000,
+    });
 
   const { data: usersByPlatformData, isLoading: usersByPlatformLoading } =
-    useQuery('users-by-platform-analytics', fetchUsersByPlatform);
+    useQuery('users-by-platform-analytics', fetchUsersByPlatform, {
+      refetchInterval: 10000,
+    });
 
   const { data: eventCountsData, isLoading: eventCountsLoading } = useQuery(
     'event-counts-analytics',
-    fetchEventCounts
+    fetchEventCounts,
+    { refetchInterval: 10000 }
   );
 
   useEffect(() => {
-    const getOrders = async () => {
-      // get firestore
-      const firestore = getFirestore();
-      // create reference with converter
-      const ref = collection(firestore, 'orders').withConverter(orderConverter);
-      // create query
-      const queryRef = query(
-        ref,
-        where('orderStatus', '==', 'Pending'),
-        limit(10)
-      );
-      // get snapshot
-      const snapshot = await getDocs(queryRef);
-      // create array to hold orders
-      const orders: Order[] = [];
-      // iterate through orders
-      for (const doc of snapshot.docs) {
-        // get order
-        const order = doc.data();
-        // initialize order
-        await order.initialize();
-        // add order to array
-        orders.push(order);
-      }
-      // save orders
-      setOrders(orders);
-    };
+    // get firestore
+    const firestore = getFirestore();
+    // create reference with converter
+    const ref = collection(firestore, 'orders').withConverter(orderConverter);
+    // create query
+    const queryRef = query(
+      ref,
+      where('orderStatus', '==', 'Pending'),
+      limit(10)
+    );
 
-    (async function () {
-      try {
-        // start loading
-        setOrdersLoading(true);
-        // get orders
-        await getOrders();
-        // create revenue data
-      } catch (error) {
+    // subscribe to data
+    const unsubscribe = onSnapshot(
+      queryRef,
+      async (snapshot) => {
+        // create array to hold orders
+        const orders: Order[] = [];
+        // iterate through orders
+        for (const doc of snapshot.docs) {
+          // get order
+          const order = doc.data();
+          // initialize order
+          await order.initialize();
+          // add order to array
+          orders.push(order);
+        }
+        // save orders
+        setOrders(orders);
+        // stop loading
+        setOrdersLoading(false);
+      },
+      (error) => {
         console.log(error);
         // show notification
-        showErrorNotification('Error Occurred');
-      } finally {
+        showErrorNotification('Error occurred while loading orders..');
         // stop loading
         setOrdersLoading(false);
       }
-    })();
+    );
+    // unsubscribe on page detached
+    return () => unsubscribe();
   }, []);
 
   useEffect(() => {
-    const getOrders = async () => {
-      // get firestore
-      const firestore = getFirestore();
-      // create reference with converter
-      const ref = collection(firestore, 'orders').withConverter(orderConverter);
-      // create query
-      const queryRef = query(
-        ref,
-        where('orderStatus', '==', 'Pending'),
-        where(
-          'orderDate',
-          '>=',
-          dayjs().subtract(10, getDatePrefix(revenueBasis!)).toDate()
-        )
-      );
-      // get snapshot
-      const snapshot = await getDocs(queryRef);
-      // create array to hold orders
-      const orders: Order[] = [];
-      // iterate through orders
-      for (const doc of snapshot.docs) {
-        // get order
-        const order = doc.data();
-        // initialize order
-        await order.initialize();
-        // add order to array
-        orders.push(order);
-      }
-      // save orders
-      setOrders(orders);
-      // return orders
-      return orders;
-    };
-
     const getDatePrefix = (revenueBasis: string) => {
       switch (revenueBasis) {
         case 'daily':
@@ -306,131 +278,140 @@ const Home: NextPage = () => {
       setRevenueByDateData(data);
     };
 
-    (async function () {
-      try {
-        // start loading
-        setRevenueByDateDataLoading(true);
-        // get orders
-        const orders = await getOrders();
+    // get firestore
+    const firestore = getFirestore();
+    // create reference with converter
+    const ref = collection(firestore, 'orders').withConverter(orderConverter);
+    // create query
+    const queryRef = query(
+      ref,
+      where(
+        'orderDate',
+        '>=',
+        dayjs().subtract(10, getDatePrefix(revenueBasis!)).toDate()
+      )
+    );
+    // subscribe to data
+    const unsubscribe = onSnapshot(
+      queryRef,
+      async (snapshot) => {
+        // create array to hold orders
+        const orders: Order[] = [];
+        // iterate through orders
+        for (const doc of snapshot.docs) {
+          // get order
+          const order = doc.data();
+          // initialize order
+          await order.initialize();
+          // add order to array
+          orders.push(order);
+        }
         // create revenue data
         calculateRevenue(orders);
-      } catch (error) {
+        // stop loading
+        setRevenueByDateDataLoading(false);
+      },
+      (error) => {
         console.log(error);
         // show notification
-        showErrorNotification('Error Occurred');
-      } finally {
+        showErrorNotification('Error occurred..');
         // stop loading
         setRevenueByDateDataLoading(false);
       }
-    })();
+    );
+    // unsubscribe on page detached
+    return () => unsubscribe();
   }, [revenueBasis]);
 
   useEffect(() => {
-    const getUsers = async () => {
-      // get firestore
-      const firestore = getFirestore();
-      // create reference with converter
-      const ref = collection(firestore, 'users').withConverter(userConverter);
-      // create query
-      const queryRef = query(ref, where('userStatus', '==', true), limit(10));
-      // get snapshot
-      const snapshot = await getDocs(queryRef);
-      // create array to hold users
-      const users: User[] = [];
-      // iterate through users
-      for (const doc of snapshot.docs) {
-        // get user
-        const user = doc.data();
-        // initialize user
-        await user.initialize();
-        // add user to array
-        users.push(user);
-      }
-      // save orders
-      setOnlineUsers(users);
-    };
-
-    (async function () {
-      try {
-        // start loading
-        setOnlineUsersLoading(true);
-        // get orders
-        await getUsers();
-        // create revenue data
-      } catch (error) {
+    // get firestore
+    const firestore = getFirestore();
+    // create reference with converter
+    const ref = collection(firestore, 'users').withConverter(userConverter);
+    // create query
+    const queryRef = query(ref, where('userStatus', '==', true), limit(10));
+    // subscribe to data
+    const unsubscribe = onSnapshot(
+      queryRef,
+      async (snapshot) => {
+        // create array to hold users
+        const users: User[] = [];
+        // iterate through users
+        for (const doc of snapshot.docs) {
+          // get user
+          const user = doc.data();
+          // initialize user
+          await user.initialize();
+          // add user to array
+          users.push(user);
+        }
+        // save orders
+        setOnlineUsers(users);
+        // stop loading
+        setOnlineUsersLoading(false);
+      },
+      (error) => {
         console.log(error);
         // show notification
-        showErrorNotification('Error Occurred');
-      } finally {
+        showErrorNotification('Error occurred while loading users..');
         // stop loading
         setOnlineUsersLoading(false);
       }
-    })();
+    );
+    // unsubscribe on page detached
+    return () => unsubscribe();
   }, []);
 
   useEffect(() => {
-    const getOrderSummary = async () => {
-      // get firestore
-      const firestore = getFirestore();
-      // create reference with converter
-      const ref = collection(firestore, 'orders').withConverter(orderConverter);
-      // create query
-      const queryRef = query(ref);
-      // get snapshot
-      const snapshot = await getDocs(queryRef);
+    // get firestore
+    const firestore = getFirestore();
+    // create reference with converter
+    const ref = collection(firestore, 'orders').withConverter(orderConverter);
+    // create query
+    const queryRef = query(ref);
+    // subscribe to data
+    const unsubscribe = onSnapshot(queryRef, async (snapshot) => {
       // save count
       setTotalOrders(snapshot.size);
-      // start revenue with zero
-      setTotalRevenue(0);
-      // start new orders with zero
-      setNewOrders(0);
+      // create counts
+      let totalRevenue = 0;
+      let newOrders = 0;
       // calculate revenue
       for (const doc of snapshot.docs) {
         // get order
         const order = doc.data();
         // increase revenue
-        setTotalRevenue(
-          (currentRevenue) => currentRevenue! + Number(order.total)
-        );
+        totalRevenue += Number(order.total);
         // check order is placed after today
         if (dayjs(order.date).isSameOrAfter(Date.now(), 'day')) {
           // increment new orders count
-          setNewOrders((count) => count! + 1);
+          newOrders++;
         }
       }
-    };
+      // save counts
+      setTotalRevenue(totalRevenue);
+      setNewOrders(newOrders);
+    });
+    // unsubscribe on page detached
+    return () => unsubscribe();
+  }, []);
 
-    const getProductSummary = async () => {
-      // get firestore
-      const firestore = getFirestore();
-      // create reference with converter
-      const ref = collection(firestore, 'products').withConverter(
-        productConverter
-      );
-      // create query
-      const queryRef = query(ref);
-      // get snapshot
-      const snapshot = await getDocs(queryRef);
+  useEffect(() => {
+    // get firestore
+    const firestore = getFirestore();
+    // create reference with converter
+    const ref = collection(firestore, 'products').withConverter(
+      productConverter
+    );
+    // create query
+    const queryRef = query(ref);
+    // subscribe to data
+    const unsubscribe = onSnapshot(queryRef, async (snapshot) => {
       // save count
       setTotalProducts(snapshot.size);
-    };
-
-    (async function () {
-      try {
-        // get user
-        await getOrderSummary();
-      } catch (error) {
-        console.log(error);
-      }
-    })();
-    (async function () {
-      try {
-        // get user
-        await getProductSummary();
-      } catch (error) {
-        console.log(error);
-      }
-    })();
+    });
+    // unsubscribe on page detached
+    return () => unsubscribe();
   }, []);
 
   useEffect(() => {
@@ -573,6 +554,13 @@ const Home: NextPage = () => {
           <LottieLoader />
         </Center>
       )}
+      {!ordersLoading && orders.length === 0 && (
+        <Center style={{ width: '100%', height: '100%' }}>
+          <Text size="xs" color="gray">
+            No pending orders available..
+          </Text>
+        </Center>
+      )}
       {!ordersLoading && orders.length > 0 && (
         <ScrollArea style={{ width: '100%', flexGrow: 1 }}>
           <Table
@@ -639,6 +627,13 @@ const Home: NextPage = () => {
           <LottieLoader />
         </Center>
       )}
+      {!onlineUsersLoading && onlineUsers.length === 0 && (
+        <Center style={{ width: '100%', height: '100%' }}>
+          <Text size="xs" color="gray">
+            No online users available..
+          </Text>
+        </Center>
+      )}
       {!onlineUsersLoading && onlineUsers.length > 0 && (
         <ScrollArea style={{ width: '100%', flexGrow: 1 }}>
           <Table
@@ -701,7 +696,6 @@ const Home: NextPage = () => {
       onReject={(rejections) => {
         console.log(rejections);
       }}
-      maxSize={5 * 1024 ** 2}
     >
       {(status) => (
         <Stack align="center" spacing={8}>
