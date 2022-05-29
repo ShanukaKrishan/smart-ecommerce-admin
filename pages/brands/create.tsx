@@ -112,6 +112,7 @@ const CreateBrand = (): JSX.Element => {
               <IconX />
             </Button>
             <Button
+              id="create-btn"
               className={classes.titleButton}
               leftIcon={<IconCheck />}
               form="create-brand-form"
@@ -140,11 +141,13 @@ const CreateBrand = (): JSX.Element => {
             >
               <Stack>
                 <TextInput
+                  id="name-input"
                   required
                   label="Name"
                   {...form.getInputProps('name')}
                 />
                 <TextInput
+                  id="description-input"
                   required
                   label="Description"
                   {...form.getInputProps('description')}
