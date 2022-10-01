@@ -15,7 +15,7 @@ interface Props {
 }
 
 const geoUrl =
-  'https://raw.githubusercontent.com/zcreativelabs/react-simple-maps/master/topojson-maps/world-110m.json';
+  'https://raw.githubusercontent.com/deldersveld/topojson/master/world-countries.json';
 
 const UserWorldMap = ({ data }: Props): JSX.Element => {
   /* --------------------------------- hooks -------------------------------- */
@@ -38,8 +38,9 @@ const UserWorldMap = ({ data }: Props): JSX.Element => {
           <Geographies geography={geoUrl}>
             {({ geographies }) =>
               geographies.map((geo) => {
+               // console.log(geo);
                 // get details
-                const { NAME: countryName } = geo.properties;
+                const { name: countryName } = geo.properties;
                 // find metrics for the country
                 const countryData = data.find(
                   (data) => data.country === countryName
